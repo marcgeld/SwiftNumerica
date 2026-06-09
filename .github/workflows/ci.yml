@@ -1,0 +1,89 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - "codex/**"
+    tags:
+      - "v*"
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: Build and test
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Describe package
+        run: swift package describe
+
+      - name: Build
+        run: swift build
+
+      - name: Test
+        run: swift test
+
+  package-consumer:
+    name: Validate package consumption
+    runs-on: macos-15
+    needs: build-and-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create consumer package
+        run: |
+          set -euo pipefail
+
+          CONSUMER_DIR="$(mktemp -d)"
+          cd "$CONSUMER_DIR"
+
+          cat > Package.swift <<EOF
+          // swift-tools-version: 6.2
+
+          import PackageDescription
+
+          let package = Package(
+              name: "SwiftNumericaConsumer",
+              platforms: [
+                  .macOS(.v14)
+              ],
+              dependencies: [
+                  .package(path: "${GITHUB_WORKSPACE}")
+              ],
+              targets: [
+                  .executableTarget(
+                      name: "SwiftNumericaConsumer",
+                      dependencies: [
+                          .product(name: "SwiftNumerica", package: "SwiftNumerica")
+                      ]
+                  )
+              ],
+              swiftLanguageModes: [.v6]
+          )
+          EOF
+
+          mkdir -p Sources/SwiftNumericaConsumer
+          cat > Sources/SwiftNumericaConsumer/main.swift <<'EOF'
+          import SwiftNumerica
+
+          let tensor = Tensor.vector([1, 2, 3, 4])
+          guard Numerica.Statistics.mean(tensor) == 2.5 else {
+              fatalError("SwiftNumerica import or mean calculation failed")
+          }
+          EOF
+
+          swift run

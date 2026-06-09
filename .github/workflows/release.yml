@@ -1,0 +1,137 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag, for example v0.1.0"
+        required: true
+        type: string
+      prerelease:
+        description: "Mark the GitHub Release as a prerelease"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, test, validate, and publish release
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve release tag
+        id: release-tag
+        run: |
+          set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "Release tag must look like v1.2.3 or v1.2.3-beta.1" >&2
+            exit 1
+          fi
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure tag exists for manual releases
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+
+          TAG="${{ steps.release-tag.outputs.tag }}"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+          fi
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Build
+        run: swift build -c release
+
+      - name: Test
+        run: swift test
+
+      - name: Validate package consumption
+        run: |
+          set -euo pipefail
+
+          CONSUMER_DIR="$(mktemp -d)"
+          cd "$CONSUMER_DIR"
+
+          cat > Package.swift <<EOF
+          // swift-tools-version: 6.2
+
+          import PackageDescription
+
+          let package = Package(
+              name: "SwiftNumericaConsumer",
+              platforms: [
+                  .macOS(.v14)
+              ],
+              dependencies: [
+                  .package(path: "${GITHUB_WORKSPACE}")
+              ],
+              targets: [
+                  .executableTarget(
+                      name: "SwiftNumericaConsumer",
+                      dependencies: [
+                          .product(name: "SwiftNumerica", package: "SwiftNumerica")
+                      ]
+                  )
+              ],
+              swiftLanguageModes: [.v6]
+          )
+          EOF
+
+          mkdir -p Sources/SwiftNumericaConsumer
+          cat > Sources/SwiftNumericaConsumer/main.swift <<'EOF'
+          import SwiftNumerica
+
+          Numerica.configuration.backend = .pureSwift
+          let result = Numerica.Statistics.mean(Tensor.vector([2, 4, 6]))
+          guard result == 4 else {
+              fatalError("SwiftNumerica package consumption validation failed")
+          }
+          EOF
+
+          swift run
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.release-tag.outputs.tag }}
+          PRERELEASE: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
+        run: |
+          set -euo pipefail
+
+          FLAGS=(--generate-notes --verify-tag)
+          if [[ "$PRERELEASE" == "true" ]]; then
+            FLAGS+=(--prerelease)
+          fi
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Release $TAG already exists"
+          else
+            gh release create "$TAG" "${FLAGS[@]}"
+          fi
