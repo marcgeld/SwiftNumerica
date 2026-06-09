@@ -69,8 +69,8 @@ Available backend options:
 
 - `ComputeBackend.pureSwift`: the pure Swift reference implementation. This backend must always be available and is the correctness baseline.
 - `ComputeBackend.accelerate`: always uses Accelerate-backed implementations for operations implemented in that backend. Selecting it explicitly fails availability resolution with `BackendError.unavailable(.accelerate)` when Accelerate cannot be imported.
+- `ComputeBackend.automatic`: automatic backend selection. The priority is Accelerate, then PureSwift.
 - `ComputeBackend.mlx`: reserved for future MLX implementations. Selecting it explicitly fails availability resolution with `BackendError.unavailable(.mlx)` until MLX support exists.
-- `ComputeBackend.automatic`: automatic backend selection. The priority is MLX, then Accelerate, then PureSwift. If MLX is unavailable and Accelerate is available, automatic resolves to Accelerate; otherwise it resolves to PureSwift.
 
 Users can switch backends at runtime:
 
@@ -132,7 +132,7 @@ import PackageDescription
 let package = Package(
     name: "ExampleProject",
     dependencies: [
-        .package(url: "https://github.com/<owner>/SwiftNumerica.git", from: "0.1.0")
+        .package(url: "https://github.com/<owner>/SwiftNumerica.git", from: "0.0.1")
     ],
     targets: [
         .target(
