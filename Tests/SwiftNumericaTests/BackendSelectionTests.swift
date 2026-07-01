@@ -82,4 +82,37 @@ struct BackendSelectionTests {
         #expect(acceleratePopulationStandardDeviation.isApproximatelyEqual(to: purePopulationStandardDeviation))
         #expect(accelerateSampleStandardDeviation.isApproximatelyEqual(to: pureSampleStandardDeviation))
     }
+
+    @Test func pureSwiftAndAccelerateMomentsAreEquivalent() throws {
+        let tensor = Tensor.vector([1, 2, 2, 3, 5, 8, 13])
+
+        Numerica.configuration.backend = .pureSwift
+        let pureSkewness = try #require(Numerica.Statistics.skewness(tensor))
+        let pureKurtosis = try #require(Numerica.Statistics.kurtosis(tensor))
+
+        Numerica.configuration.backend = .accelerate
+        let accelerateSkewness = try #require(Numerica.Statistics.skewness(tensor))
+        let accelerateKurtosis = try #require(Numerica.Statistics.kurtosis(tensor))
+
+        #expect(accelerateSkewness.isApproximatelyEqual(to: pureSkewness))
+        #expect(accelerateKurtosis.isApproximatelyEqual(to: pureKurtosis))
+    }
+
+    @Test func pureSwiftAndAccelerateCorrelationAndRegressionAreEquivalent() throws {
+        let x = Tensor.vector([1, 2, 3, 5, 8, 13])
+        let y = Tensor.vector([2, 5, 7, 11, 17, 26])
+
+        Numerica.configuration.backend = .pureSwift
+        let pureCorrelation = try #require(Numerica.Statistics.pearsonCorrelation(x, y))
+        let pureRegression = try #require(Numerica.Statistics.linearRegression(x: x, y: y))
+
+        Numerica.configuration.backend = .accelerate
+        let accelerateCorrelation = try #require(Numerica.Statistics.pearsonCorrelation(x, y))
+        let accelerateRegression = try #require(Numerica.Statistics.linearRegression(x: x, y: y))
+
+        #expect(accelerateCorrelation.isApproximatelyEqual(to: pureCorrelation))
+        #expect(accelerateRegression.slope.isApproximatelyEqual(to: pureRegression.slope))
+        #expect(accelerateRegression.intercept.isApproximatelyEqual(to: pureRegression.intercept))
+        #expect(accelerateRegression.rSquared.isApproximatelyEqual(to: pureRegression.rSquared))
+    }
 }
