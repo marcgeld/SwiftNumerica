@@ -153,12 +153,12 @@ The CI workflow validates this packaging contract by creating a separate consume
 
 GitHub Actions workflows live in `.github/workflows`.
 
-- `CI` builds the package, runs tests, and validates package consumption from another Swift package.
+- `CI` builds the package, runs tests, and validates package consumption from another Swift package in one job.
 - `Release` can run when a `v*` tag is pushed or manually through `workflow_dispatch`.
-- Manual releases require a semantic tag such as `v0.1.0`.
-- Release builds run `swift build -c release`, `swift test`, and the package-consumer validation before creating the GitHub Release.
+- Manual releases require an existing semantic tag such as `v0.1.0`.
+- Release builds run `swift build -c release` and `swift test` before creating the GitHub Release.
 
-The release workflow uses the repository `GITHUB_TOKEN` with `contents: write` permission to create tags for manual releases and publish GitHub Releases.
+The release workflow uses the repository `GITHUB_TOKEN` with `contents: write` permission to publish GitHub Releases.
 
 ## Roadmap
 
