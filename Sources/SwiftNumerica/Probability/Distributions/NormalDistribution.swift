@@ -33,6 +33,15 @@ public extension Numerica.Probability {
         public func probability(at value: Double) -> Double {
             pdf(value)
         }
+
+        /// Draws a random sample from the distribution using `generator`.
+        public func sample<T: RandomNumberGenerator>(using generator: inout T) -> Double {
+            let radiusUniform = Double.random(in: Double.leastNonzeroMagnitude..<1, using: &generator)
+            let angleUniform = Double.random(in: 0..<1, using: &generator)
+            let standardNormal = Foundation.sqrt(-2 * Foundation.log(radiusUniform))
+                * Foundation.cos(2 * ProbabilityMath.pi * angleUniform)
+            return mean + standardDeviation * standardNormal
+        }
     }
 }
 

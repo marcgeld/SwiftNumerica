@@ -37,6 +37,18 @@ public extension Numerica.Probability {
             guard value.rounded() == value else { return 0 }
             return pmf(Int(value))
         }
+
+        /// Draws a random sample from the distribution using `generator`.
+        public func sample<T: RandomNumberGenerator>(using generator: inout T) -> Int {
+            guard trials > 0, probabilityOfSuccess > 0 else { return 0 }
+            guard probabilityOfSuccess < 1 else { return trials }
+
+            var successes = 0
+            for _ in 0..<trials where Double.random(in: 0..<1, using: &generator) < probabilityOfSuccess {
+                successes += 1
+            }
+            return successes
+        }
     }
 }
 

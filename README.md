@@ -99,7 +99,7 @@ Implemented:
 - Correlation: Pearson and Spearman
 - Regression: simple linear regression, multiple linear regression, and binary logistic regression
 - Combinatorics: factorial, combinations, permutations
-- Probability: tensor-based discrete expected value plus normal, uniform, binomial, hypergeometric, and Poisson distributions
+- Probability: tensor-based discrete expected value plus normal, uniform, binomial, hypergeometric, and Poisson distributions with random sampling
 - Data profiling: Benford, Zipf, Pareto, normality, uniformity, outliers, correlation matrices, trends, growth rates, and `DatasetProfiler.profile(_:)`
 
 ## Example Usage
@@ -114,6 +114,7 @@ let profile = DatasetProfiler.profile(values)
 
 let normal = Numerica.Probability.NormalDistribution()
 let densityAtZero = normal?.pdf(0)
+let simulatedValues = normal?.sample(count: 1_000)
 
 let features = Tensor.matrix([[0], [1], [2], [3]])!
 let target = Tensor.vector([0, 0, 1, 1])

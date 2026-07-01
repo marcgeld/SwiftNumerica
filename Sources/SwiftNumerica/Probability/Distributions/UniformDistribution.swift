@@ -33,6 +33,11 @@ public extension Numerica.Probability {
         public func probability(at value: Double) -> Double {
             pdf(value)
         }
+
+        /// Draws a random sample from the distribution using `generator`.
+        public func sample<T: RandomNumberGenerator>(using generator: inout T) -> Double {
+            Double.random(in: lowerBound...upperBound, using: &generator)
+        }
     }
 }
 

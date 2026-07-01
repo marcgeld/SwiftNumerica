@@ -32,6 +32,20 @@ public extension Numerica.Probability {
             guard value.rounded() == value else { return 0 }
             return pmf(Int(value))
         }
+
+        /// Draws a random sample from the distribution using `generator`.
+        public func sample<T: RandomNumberGenerator>(using generator: inout T) -> Int {
+            let threshold = Foundation.exp(-lambda)
+            var product = 1.0
+            var count = 0
+
+            repeat {
+                count += 1
+                product *= Double.random(in: 0..<1, using: &generator)
+            } while product > threshold
+
+            return count - 1
+        }
     }
 }
 
