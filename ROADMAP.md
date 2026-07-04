@@ -1,0 +1,230 @@
+# SwiftNumerica Roadmap
+
+SwiftNumerica aims to fill the practical scientific-computing gap between
+Swift Numerics and SciPy with a native Swift API, strong typing, value
+semantics, and Apple Silicon optimization. The package should feel familiar to
+scientific-computing users without copying Python's dynamic API style or trying
+to become a full SciPy clone.
+
+## Design Goals
+
+- Provide an idiomatic, native Swift API.
+- Optimize for Apple Silicon and use Accelerate where it provides clear value.
+- Prefer strong types, protocol-oriented design, value semantics, and `Sendable`
+  data structures.
+- Avoid Python-style dynamic APIs, untyped dictionaries, and stringly typed
+  configuration.
+- Focus on practical statistics, probability, optimization, simulation, and
+  linear algebra workflows.
+- Keep the numerical core tensor-first. DataFrame, CSV, SQL, and file-format
+  integration belongs in adapters or clearly separated integration modules.
+- Keep MLX as an optional adapter package, not a dependency of the SwiftNumerica
+  core library.
+
+## Prioritization
+
+### Phase 1: Core Statistics
+
+Status: implemented.
+
+Core statistics should provide both namespace APIs and ergonomic value-style
+entry points where that does not compromise clarity.
+
+Target operations:
+
+- `mean`
+- `median`
+- `mode`
+- `variance`
+- `standardDeviation`
+- `min`
+- `max`
+- `sum`
+- `quantile`
+- `percentile`
+- `interquartileRange`
+- `skewness`
+- `kurtosis`
+- `covariance`
+- `correlation`
+
+Example target API:
+
+```swift
+let m = data.mean()
+let p95 = data.percentile(95)
+```
+
+### Phase 2: Probability Distributions
+
+Status: implemented for the target scalar distribution APIs. Future work can add
+batch tensor APIs and more advanced numerical methods where useful.
+
+Distributions should be value types with explicit parameters and no dynamic
+configuration. Scalar APIs should come first; tensorized batch APIs can be added
+where Accelerate or SIMD creates a meaningful improvement.
+
+Target distributions:
+
+- `NormalDistribution`
+- `UniformDistribution`
+- `PoissonDistribution`
+- `ExponentialDistribution`
+- `BinomialDistribution`
+- `BetaDistribution`
+- `GammaDistribution`
+
+Each distribution should provide:
+
+- `pdf(_:)` or `pmf(_:)`
+- `cdf(_:)`
+- `inverseCDF(_:)`
+- `sample()`
+- `mean`
+- `variance`
+
+Example target API:
+
+```swift
+let normal = NormalDistribution(mean: 0, standardDeviation: 1)
+let p = normal.cdf(1.96)
+```
+
+### Phase 3: Statistical Tests
+
+Status: implemented for the target scalar/tensor test APIs. Future work can add
+effect sizes, alternative hypotheses, and exact small-sample methods where
+useful.
+
+Statistical tests should return strongly typed result objects rather than loose
+tuples or dictionaries.
+
+Target tests:
+
+- `tTest`
+- `pairedTTest`
+- `chiSquareTest`
+- `oneWayANOVA`
+- `mannWhitneyU`
+
+Result objects should expose:
+
+- `statistic`
+- `pValue`
+- `confidenceInterval`
+
+Example target API:
+
+```swift
+if let result = tTest(sampleA, sampleB) {
+    print(result.pValue)
+}
+```
+
+### Phase 4: Regression
+
+Regression APIs should support a model-oriented interface while preserving the
+current lightweight namespace functions where useful.
+
+Target models:
+
+- `LinearRegression`
+- `PolynomialRegression`
+- `LogisticRegression`
+
+Example target API:
+
+```swift
+let model = LinearRegression()
+model.fit(x, y)
+```
+
+### Phase 5: Numerical Optimization
+
+Status: implemented for unconstrained scalar objective functions over `[Double]`.
+Future work can add bounds, constraints, analytical gradients, and richer
+diagnostics.
+
+Optimization should prioritize common, practical algorithms with clear failure
+states and typed results.
+
+Target entry points:
+
+- `minimize`
+- `maximize`
+
+Target algorithms:
+
+- Gradient Descent
+- Newton-Raphson
+- LBFGS
+- Nelder-Mead
+
+Example target API:
+
+```swift
+if let solution = minimize(
+    function: rosenbrock,
+    initialGuess: [0, 0]
+) {
+    print(solution.value)
+}
+```
+
+### Phase 6: Linear Algebra
+
+Linear algebra should provide Swift-friendly `Matrix` and `Vector` APIs backed
+by Accelerate, BLAS, and LAPACK where beneficial.
+
+Target operations:
+
+- `Matrix`
+- `Vector`
+- `determinant`
+- `inverse`
+- `solve`
+- `eigenvalues`
+- `eigenvectors`
+
+### Phase 7: Simulation
+
+Simulation APIs should compose with distributions and tensors while keeping
+randomness explicit and testable.
+
+Target APIs:
+
+- `MonteCarloSimulation`
+- `RandomWalk`
+- `MarkovChain`
+
+### Phase 8: Data Science Integration
+
+Data science integration should not weaken the tensor-first numerical core.
+Adapters may bridge between SwiftNumerica and tabular data, but algorithms
+should continue to operate on typed numerical structures.
+
+Target integrations:
+
+- `TabularData.DataFrame`
+- CSV import/export
+- Statistical summaries
+- Group-by aggregations
+
+## Backend Strategy
+
+- Keep PureSwift implementations as the correctness baseline.
+- Use Accelerate for vectorized statistics, linear algebra, and batch
+  probability operations where it reduces runtime or allocations.
+- Prefer SIMD for small fixed-width operations when it improves clarity and
+  performance.
+- Keep MLX interoperability in `Adapters/SwiftNumericaMLX` so users can convert
+  tensors to MLX arrays without making MLX a transitive dependency of the core
+  package.
+- Keep backend details internal. Public APIs should remain backend-independent.
+- Validate accelerated implementations against PureSwift within documented
+  tolerances.
+
+## Success Criterion
+
+SwiftNumerica should become the default Swift package for statistics,
+probability, optimization, and scientific computing on Apple Silicon.

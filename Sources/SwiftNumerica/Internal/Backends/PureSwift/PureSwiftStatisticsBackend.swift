@@ -1,6 +1,19 @@
 import Foundation
 
 internal struct PureSwiftStatisticsBackend: StatisticsBackend {
+    internal func sum(_ tensor: Tensor<Double>) -> Double? {
+        guard InputValidation.isNonEmpty(tensor) else { return nil }
+        return tensor.values.reduce(0, +)
+    }
+
+    internal func min(_ tensor: Tensor<Double>) -> Double? {
+        tensor.values.min()
+    }
+
+    internal func max(_ tensor: Tensor<Double>) -> Double? {
+        tensor.values.max()
+    }
+
     internal func mean(_ tensor: Tensor<Double>) -> Double? {
         guard InputValidation.isNonEmpty(tensor) else { return nil }
         return tensor.values.reduce(0, +) / Double(tensor.count)
@@ -80,9 +93,29 @@ internal struct PureSwiftStatisticsBackend: StatisticsBackend {
         return sorted[lowerIndex] * (1 - weight) + sorted[upperIndex] * weight
     }
 
+    internal func percentile(_ tensor: Tensor<Double>, percentile: Double) -> Double? {
+        guard (0...100).contains(percentile) else { return nil }
+        return quantile(tensor, probability: percentile / 100)
+    }
+
+    internal func interquartileRange(_ tensor: Tensor<Double>) -> Double? {
+        guard let lower = quantile(tensor, probability: 0.25),
+              let upper = quantile(tensor, probability: 0.75) else { return nil }
+        return upper - lower
+    }
+
     internal func zScore(value: Double, mean: Double, standardDeviation: Double) -> Double? {
         guard standardDeviation != 0 else { return nil }
         return (value - mean) / standardDeviation
+    }
+
+    internal func populationCovariance(_ x: Tensor<Double>, _ y: Tensor<Double>) -> Double? {
+        covariance(x, y, denominator: x.count)
+    }
+
+    internal func sampleCovariance(_ x: Tensor<Double>, _ y: Tensor<Double>) -> Double? {
+        guard x.count > 1 else { return nil }
+        return covariance(x, y, denominator: x.count - 1)
     }
 
     internal func pearsonCorrelation(_ x: Tensor<Double>, _ y: Tensor<Double>) -> Double? {
@@ -204,6 +237,18 @@ internal struct PureSwiftStatisticsBackend: StatisticsBackend {
     private func differenceSquared(_ value: Double, mean: Double) -> Double {
         let difference = value - mean
         return difference * difference
+    }
+
+    private func covariance(_ x: Tensor<Double>, _ y: Tensor<Double>, denominator: Int) -> Double? {
+        guard x.count == y.count, x.count > 0,
+              let xMean = mean(x),
+              let yMean = mean(y) else { return nil }
+
+        var sum = 0.0
+        for index in x.values.indices {
+            sum += (x.values[index] - xMean) * (y.values[index] - yMean)
+        }
+        return sum / Double(denominator)
     }
 
     private func ranks(for values: [Double]) -> [Double] {

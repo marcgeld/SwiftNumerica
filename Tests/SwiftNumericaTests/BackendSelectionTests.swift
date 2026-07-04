@@ -37,28 +37,15 @@ struct BackendSelectionTests {
         #expect(accelerateMean.isApproximatelyEqual(to: pureMean))
         #expect(accelerateVariance.isApproximatelyEqual(to: pureVariance))
 
-        if ComputeBackend.mlx.isAvailable {
-            Numerica.configuration.backend = .mlx
-            let mlxMean = try #require(Numerica.Statistics.mean(tensor))
-            let mlxVariance = try #require(Numerica.Statistics.populationVariance(tensor))
-            #expect(mlxMean.isApproximatelyEqual(to: pureMean))
-            #expect(mlxVariance.isApproximatelyEqual(to: pureVariance))
-        }
-    }
-
-    @Test func explicitUnavailableBackendThrowsDuringResolution() {
-        guard !ComputeBackend.mlx.isAvailable else { return }
-
-        Numerica.configuration.backend = .mlx
-        #expect(throws: BackendError.unavailable(.mlx)) {
-            try Numerica.resolvedBackend()
-        }
     }
 
     @Test func pureSwiftAndAccelerateDescriptiveStatisticsAreEquivalent() throws {
         let tensor = Tensor.vector([2, 4, 4, 4, 5, 5, 7, 9])
 
         Numerica.configuration.backend = .pureSwift
+        let pureSum = try #require(Numerica.Statistics.sum(tensor))
+        let pureMin = try #require(Numerica.Statistics.min(tensor))
+        let pureMax = try #require(Numerica.Statistics.max(tensor))
         let pureRange = try #require(Numerica.Statistics.range(tensor))
         let purePopulationVariance = try #require(Numerica.Statistics.populationVariance(tensor))
         let pureSampleVariance = try #require(Numerica.Statistics.sampleVariance(tensor))
@@ -68,6 +55,9 @@ struct BackendSelectionTests {
             Numerica.Statistics.sampleStandardDeviation(tensor))
 
         Numerica.configuration.backend = .accelerate
+        let accelerateSum = try #require(Numerica.Statistics.sum(tensor))
+        let accelerateMin = try #require(Numerica.Statistics.min(tensor))
+        let accelerateMax = try #require(Numerica.Statistics.max(tensor))
         let accelerateRange = try #require(Numerica.Statistics.range(tensor))
         let acceleratePopulationVariance = try #require(Numerica.Statistics.populationVariance(tensor))
         let accelerateSampleVariance = try #require(Numerica.Statistics.sampleVariance(tensor))
@@ -76,6 +66,9 @@ struct BackendSelectionTests {
         let accelerateSampleStandardDeviation = try #require(
             Numerica.Statistics.sampleStandardDeviation(tensor))
 
+        #expect(accelerateSum.isApproximatelyEqual(to: pureSum))
+        #expect(accelerateMin.isApproximatelyEqual(to: pureMin))
+        #expect(accelerateMax.isApproximatelyEqual(to: pureMax))
         #expect(accelerateRange.isApproximatelyEqual(to: pureRange))
         #expect(acceleratePopulationVariance.isApproximatelyEqual(to: purePopulationVariance))
         #expect(accelerateSampleVariance.isApproximatelyEqual(to: pureSampleVariance))
@@ -104,13 +97,19 @@ struct BackendSelectionTests {
 
         Numerica.configuration.backend = .pureSwift
         let pureCorrelation = try #require(Numerica.Statistics.pearsonCorrelation(x, y))
+        let purePopulationCovariance = try #require(Numerica.Statistics.populationCovariance(x, y))
+        let pureSampleCovariance = try #require(Numerica.Statistics.sampleCovariance(x, y))
         let pureRegression = try #require(Numerica.Statistics.linearRegression(x: x, y: y))
 
         Numerica.configuration.backend = .accelerate
         let accelerateCorrelation = try #require(Numerica.Statistics.pearsonCorrelation(x, y))
+        let acceleratePopulationCovariance = try #require(Numerica.Statistics.populationCovariance(x, y))
+        let accelerateSampleCovariance = try #require(Numerica.Statistics.sampleCovariance(x, y))
         let accelerateRegression = try #require(Numerica.Statistics.linearRegression(x: x, y: y))
 
         #expect(accelerateCorrelation.isApproximatelyEqual(to: pureCorrelation))
+        #expect(acceleratePopulationCovariance.isApproximatelyEqual(to: purePopulationCovariance))
+        #expect(accelerateSampleCovariance.isApproximatelyEqual(to: pureSampleCovariance))
         #expect(accelerateRegression.slope.isApproximatelyEqual(to: pureRegression.slope))
         #expect(accelerateRegression.intercept.isApproximatelyEqual(to: pureRegression.intercept))
         #expect(accelerateRegression.rSquared.isApproximatelyEqual(to: pureRegression.rSquared))

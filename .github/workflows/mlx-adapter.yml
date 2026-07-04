@@ -1,0 +1,41 @@
+name: MLX Adapter
+
+on:
+  push:
+    branches:
+      - main
+      - "codex/**"
+    paths:
+      - "Adapters/SwiftNumericaMLX/**"
+      - "Sources/SwiftNumerica/**"
+      - "Package.swift"
+      - ".github/workflows/mlx-adapter.yml"
+  pull_request:
+    paths:
+      - "Adapters/SwiftNumericaMLX/**"
+      - "Sources/SwiftNumerica/**"
+      - "Package.swift"
+      - ".github/workflows/mlx-adapter.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mlx-adapter-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build MLX adapter
+    runs-on: macos-26
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Build adapter
+        run: swift build --package-path Adapters/SwiftNumericaMLX

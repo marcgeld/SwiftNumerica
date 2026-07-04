@@ -1,11 +1,9 @@
 internal enum BackendResolver {
     private static let pureSwiftStatistics = PureSwiftStatisticsBackend()
     private static let accelerateStatistics = AccelerateStatisticsBackend()
-    private static let mlxStatistics = MLXStatisticsBackend()
 
     private static let pureSwiftCombinatorics = PureSwiftCombinatoricsBackend()
     private static let accelerateCombinatorics = AccelerateCombinatoricsBackend()
-    private static let mlxCombinatorics = MLXCombinatoricsBackend()
 
     internal static func statisticsBackend() throws -> any StatisticsBackend {
         switch try resolvedBackend() {
@@ -13,8 +11,6 @@ internal enum BackendResolver {
             pureSwiftStatistics
         case .accelerate:
             accelerateStatistics
-        case .mlx:
-            mlxStatistics
         case .automatic:
             pureSwiftStatistics
         }
@@ -26,8 +22,6 @@ internal enum BackendResolver {
             pureSwiftCombinatorics
         case .accelerate:
             accelerateCombinatorics
-        case .mlx:
-            mlxCombinatorics
         case .automatic:
             pureSwiftCombinatorics
         }
@@ -42,20 +36,12 @@ internal enum BackendResolver {
                 throw BackendError.unavailable(.accelerate)
             }
             return .accelerate
-        case .mlx:
-            guard BackendAvailability.isMLXAvailable else {
-                throw BackendError.unavailable(.mlx)
-            }
-            return .mlx
         case let backend:
             return backend
         }
     }
 
     private static func automaticBackend() -> ComputeBackend {
-        if BackendAvailability.isMLXAvailable {
-            return .mlx
-        }
         if BackendAvailability.isAccelerateAvailable {
             return .accelerate
         }

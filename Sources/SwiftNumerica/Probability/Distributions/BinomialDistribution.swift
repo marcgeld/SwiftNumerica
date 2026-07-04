@@ -9,6 +9,16 @@ public extension Numerica.Probability {
         /// The success probability for each trial.
         public let probabilityOfSuccess: Double
 
+        /// The analytical mean of the distribution.
+        public var mean: Double {
+            Double(trials) * probabilityOfSuccess
+        }
+
+        /// The analytical variance of the distribution.
+        public var variance: Double {
+            Double(trials) * probabilityOfSuccess * (1 - probabilityOfSuccess)
+        }
+
         /// Creates a binomial distribution.
         ///
         /// - Returns: `nil` when `trials` is negative or probability is outside `0...1`.
@@ -30,6 +40,22 @@ public extension Numerica.Probability {
             guard value >= 0 else { return 0 }
             guard value < trials else { return 1 }
             return (0...value).map(pmf).reduce(0, +)
+        }
+
+        /// Evaluates the inverse cumulative distribution function.
+        public func inverseCDF(_ probability: Double) -> Int? {
+            guard (0...1).contains(probability) else { return nil }
+            if probability == 0 { return 0 }
+            if probability == 1 { return trials }
+
+            var cumulative = 0.0
+            for value in 0...trials {
+                cumulative += pmf(value)
+                if cumulative >= probability {
+                    return value
+                }
+            }
+            return trials
         }
 
         /// Evaluates probability mass at a value.

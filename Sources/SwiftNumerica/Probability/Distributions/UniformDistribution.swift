@@ -7,6 +7,17 @@ public extension Numerica.Probability {
         /// The upper bound.
         public let upperBound: Double
 
+        /// The analytical mean of the distribution.
+        public var mean: Double {
+            (lowerBound + upperBound) / 2
+        }
+
+        /// The analytical variance of the distribution.
+        public var variance: Double {
+            let width = upperBound - lowerBound
+            return width * width / 12
+        }
+
         /// Creates a uniform distribution.
         ///
         /// - Returns: `nil` when `upperBound` is not greater than `lowerBound`.
@@ -27,6 +38,12 @@ public extension Numerica.Probability {
             if value <= lowerBound { return 0 }
             if value >= upperBound { return 1 }
             return (value - lowerBound) / (upperBound - lowerBound)
+        }
+
+        /// Evaluates the inverse cumulative distribution function.
+        public func inverseCDF(_ probability: Double) -> Double? {
+            guard (0...1).contains(probability) else { return nil }
+            return lowerBound + probability * (upperBound - lowerBound)
         }
 
         /// Evaluates probability density at a value.

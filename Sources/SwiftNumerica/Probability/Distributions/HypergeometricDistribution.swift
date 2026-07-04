@@ -10,6 +10,21 @@ public extension Numerica.Probability {
         /// The number of draws.
         public let draws: Int
 
+        /// The analytical mean of the distribution.
+        public var mean: Double {
+            guard populationSize > 0 else { return 0 }
+            return Double(draws) * Double(successStates) / Double(populationSize)
+        }
+
+        /// The analytical variance of the distribution.
+        public var variance: Double {
+            guard populationSize > 1 else { return 0 }
+            let population = Double(populationSize)
+            let successRatio = Double(successStates) / population
+            return Double(draws) * successRatio * (1 - successRatio)
+                * Double(populationSize - draws) / Double(populationSize - 1)
+        }
+
         /// Creates a hypergeometric distribution.
         ///
         /// - Returns: `nil` when the population parameters are invalid.
@@ -41,6 +56,24 @@ public extension Numerica.Probability {
             guard value >= 0 else { return 0 }
             let upper = Swift.min(value, Swift.min(successStates, draws))
             return (0...upper).map(pmf).reduce(0, +)
+        }
+
+        /// Evaluates the inverse cumulative distribution function.
+        public func inverseCDF(_ probability: Double) -> Int? {
+            guard (0...1).contains(probability) else { return nil }
+            let lower = Swift.max(0, draws - (populationSize - successStates))
+            let upper = Swift.min(successStates, draws)
+            if probability == 0 { return lower }
+            if probability == 1 { return upper }
+
+            var cumulative = 0.0
+            for value in lower...upper {
+                cumulative += pmf(value)
+                if cumulative >= probability {
+                    return value
+                }
+            }
+            return upper
         }
 
         /// Evaluates probability mass at a value.

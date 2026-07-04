@@ -48,6 +48,13 @@ import Testing
     #expect(range.isApproximatelyEqual(to: 10))
 }
 
+@Test func sumMinAndMaxSummarizeTensorValues() throws {
+    let tensor = Tensor.vector([4, -2, 8, 1])
+    #expect(try #require(Numerica.Statistics.sum(tensor)).isApproximatelyEqual(to: 11))
+    #expect(try #require(Numerica.Statistics.min(tensor)).isApproximatelyEqual(to: -2))
+    #expect(try #require(Numerica.Statistics.max(tensor)).isApproximatelyEqual(to: 8))
+}
+
 @Test func populationVarianceUsesPopulationDenominator() throws {
     let variance = try #require(
         Numerica.Statistics.populationVariance(.vector([2, 4, 4, 4, 5, 5, 7, 9])))
@@ -58,6 +65,9 @@ import Testing
     let variance = try #require(
         Numerica.Statistics.sampleVariance(.vector([2, 4, 4, 4, 5, 5, 7, 9])))
     #expect(variance.isApproximatelyEqual(to: 32.0 / 7.0))
+    let convenience = try #require(
+        Numerica.Statistics.variance(.vector([2, 4, 4, 4, 5, 5, 7, 9])))
+    #expect(convenience.isApproximatelyEqual(to: variance))
 }
 
 @Test func populationStandardDeviationIsSquareRootOfPopulationVariance() throws {
@@ -70,6 +80,9 @@ import Testing
     let standardDeviation = try #require(
         Numerica.Statistics.sampleStandardDeviation(.vector([2, 4, 4, 4, 5, 5, 7, 9])))
     #expect(standardDeviation.isApproximatelyEqual(to: (32.0 / 7.0).squareRoot()))
+    let convenience = try #require(
+        Numerica.Statistics.standardDeviation(.vector([2, 4, 4, 4, 5, 5, 7, 9])))
+    #expect(convenience.isApproximatelyEqual(to: standardDeviation))
 }
 
 @Test func skewnessOfSymmetricValuesIsZero() throws {
@@ -85,6 +98,16 @@ import Testing
 @Test func quantileInterpolatesValues() throws {
     let quantile = try #require(Numerica.Statistics.quantile(.vector([0, 10]), probability: 0.25))
     #expect(quantile.isApproximatelyEqual(to: 2.5))
+}
+
+@Test func percentileUsesZeroToOneHundredScale() throws {
+    let percentile = try #require(Numerica.Statistics.percentile(.vector([0, 10]), percentile: 25))
+    #expect(percentile.isApproximatelyEqual(to: 2.5))
+}
+
+@Test func interquartileRangeReturnsUpperMinusLowerQuartile() throws {
+    let iqr = try #require(Numerica.Statistics.interquartileRange(.vector([1, 2, 3, 4, 5])))
+    #expect(iqr.isApproximatelyEqual(to: 2))
 }
 
 @Test func zScoreIsZeroWhenValueEqualsMean() throws {
@@ -106,6 +129,18 @@ import Testing
     let correlation = try #require(
         Numerica.Statistics.pearsonCorrelation(.vector([1, 2, 3]), .vector([2, 4, 6])))
     #expect(correlation.isApproximatelyEqual(to: 1))
+}
+
+@Test func covarianceUsesExpectedDenominator() throws {
+    let x = Tensor.vector([1, 2, 3])
+    let y = Tensor.vector([2, 4, 6])
+    let population = try #require(Numerica.Statistics.populationCovariance(x, y))
+    let sample = try #require(Numerica.Statistics.sampleCovariance(x, y))
+
+    #expect(population.isApproximatelyEqual(to: 4.0 / 3.0))
+    #expect(sample.isApproximatelyEqual(to: 2))
+    #expect(try #require(Numerica.Statistics.covariance(x, y)).isApproximatelyEqual(to: sample))
+    #expect(try #require(Numerica.Statistics.correlation(x, y)).isApproximatelyEqual(to: 1))
 }
 
 @Test func spearmanCorrelationUsesRanks() throws {
@@ -159,6 +194,17 @@ import Testing
     let highPrediction = try #require(result.predict(.vector([3])))
     #expect(lowPrediction == 0)
     #expect(highPrediction == 1)
+}
+
+@Test func tensorValueStyleStatisticsDelegateToNamespaceAPIs() throws {
+    let values = Tensor.vector([1, 2, 3, 4, 5])
+
+    #expect(try #require(values.sum()).isApproximatelyEqual(to: 15))
+    #expect(try #require(values.mean()).isApproximatelyEqual(to: 3))
+    #expect(try #require(values.variance()).isApproximatelyEqual(to: 2.5))
+    #expect(try #require(values.standardDeviation()).isApproximatelyEqual(to: 2.5.squareRoot()))
+    #expect(try #require(values.percentile(95)).isApproximatelyEqual(to: 4.8))
+    #expect(try #require(values.interquartileRange()).isApproximatelyEqual(to: 2))
 }
 
 extension Double {

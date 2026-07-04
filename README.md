@@ -1,12 +1,12 @@
 # SwiftNumerica
 
-SwiftNumerica is a modern numerical computing, statistics, probability, and data analysis library for Swift. It is inspired by NumPy, SciPy, Swift Numerics, and MLX while staying idiomatic to Swift: value types, protocol-oriented design, composable namespaces, Swift Package Manager, Swift Testing, and DocC comments.
+SwiftNumerica is a modern numerical computing, statistics, probability, and data analysis library for Swift. It is inspired by NumPy, SciPy, and Swift Numerics while staying idiomatic to Swift: value types, protocol-oriented design, composable namespaces, Swift Package Manager, Swift Testing, and DocC comments.
 
 ## Design Philosophy
 
 The fundamental abstraction is `Tensor<Double>`. Numerical code must operate on tensors, not CSV files, TSV files, JSON tables, SQL tables, or DataFrames. Tabular systems may be added later as adapters, but the numerical core must remain independent of them.
 
-The initial implementation is pure Swift and targets Apple Silicon first. Future backends may use Accelerate, SIMD, MLX, Metal, BLAS, or LAPACK without changing public APIs.
+The initial implementation is pure Swift and targets Apple Silicon first. Future backends may use Accelerate, SIMD, Metal, BLAS, or LAPACK without changing public APIs. MLX interoperability lives in an optional adapter package so the core library does not depend on MLX.
 
 ## Tensor-First Architecture
 
@@ -47,14 +47,19 @@ Sources/
     │   ├── Descriptive
     │   ├── Correlation
     │   ├── Regression
+    │   ├── Tests
     │   └── DistributionAnalysis
     ├── Probability
+    ├── Optimization
     ├── Combinatorics
     ├── DataProfiling
     └── Internal
         ├── Backends
         ├── Protocols
         └── Validation
+Adapters/
+└── SwiftNumericaMLX
+    └── Optional MLX conversion package
 ```
 
 ## Backend Architecture
@@ -70,7 +75,6 @@ Available backend options:
 - `ComputeBackend.pureSwift`: the pure Swift reference implementation. This backend must always be available and is the correctness baseline.
 - `ComputeBackend.accelerate`: always uses Accelerate-backed implementations for operations implemented in that backend. Selecting it explicitly fails availability resolution with `BackendError.unavailable(.accelerate)` when Accelerate cannot be imported.
 - `ComputeBackend.automatic`: automatic backend selection. The priority is Accelerate, then PureSwift.
-- `ComputeBackend.mlx`: reserved for future MLX implementations. Selecting it explicitly fails availability resolution with `BackendError.unavailable(.mlx)` until MLX support exists.
 
 Users can switch backends at runtime:
 
@@ -85,7 +89,20 @@ let accelerated = Numerica.Statistics.mean(Tensor.vector([1, 2, 3]))
 Numerica.configuration.backend = .automatic
 ```
 
-Runtime switching exists so future benchmark and validation modules can run identical tensors through PureSwift, Accelerate, MLX, and other backends. Accelerated backends must produce numerically equivalent results to PureSwift within documented tolerances. Backend-specific optimizations belong behind internal backend protocols such as `StatisticsBackend`, `TensorBackend`, `LinearAlgebraBackend`, and `ProbabilityBackend`.
+Runtime switching exists so future benchmark and validation modules can run identical tensors through PureSwift, Accelerate, and other core backends. Accelerated backends must produce numerically equivalent results to PureSwift within documented tolerances. Backend-specific optimizations belong behind internal backend protocols such as `StatisticsBackend`, `TensorBackend`, `LinearAlgebraBackend`, and `ProbabilityBackend`.
+
+## Optional MLX Adapter
+
+The core `SwiftNumerica` package intentionally has no MLX dependency. MLX interoperability lives in a separate package at [Adapters/SwiftNumericaMLX](Adapters/SwiftNumericaMLX), which can be built independently and imported only by projects that need MLX arrays.
+
+```swift
+import SwiftNumerica
+import SwiftNumericaMLX
+
+let tensor = Tensor.vector([1, 2, 3])
+let array = tensor.mlxArray()
+let roundTrip = Tensor<Double>(mlxArray: array)
+```
 
 Existing optional-returning numerical APIs preserve their current signatures. Code that needs explicit backend availability errors should call `try Numerica.resolvedBackend()` after changing `Numerica.configuration.backend`.
 
@@ -95,11 +112,13 @@ Implemented:
 
 - `Tensor<Double>`, `Shape`, `TensorIndex`, `Vector`, and `Matrix`
 - Tensor reshaping with row-major storage preservation
-- Descriptive statistics: mean, median, mode, range, population/sample variance, population/sample standard deviation, skewness, excess kurtosis, quantile, z-score
-- Correlation: Pearson and Spearman
+- Descriptive statistics: sum, min, max, mean, median, mode, range, population/sample variance, population/sample standard deviation, skewness, excess kurtosis, quantile, percentile, interquartile range, and z-score
+- Correlation and covariance: Pearson, Spearman, population/sample covariance, and convenience correlation/covariance aliases
+- Statistical tests: Welch t-test, paired t-test, chi-square goodness-of-fit, one-way ANOVA, and two-sided Mann-Whitney U
 - Regression: simple linear regression, multiple linear regression, and binary logistic regression
+- Optimization: `minimize` and `maximize` with gradient descent, Newton-Raphson, LBFGS, and Nelder-Mead
 - Combinatorics: factorial, combinations, permutations
-- Probability: tensor-based discrete expected value plus normal, uniform, binomial, hypergeometric, and Poisson distributions with random sampling
+- Probability: tensor-based discrete expected value plus normal, uniform, Poisson, exponential, binomial, beta, gamma, and hypergeometric distributions with CDFs, inverse CDFs, analytical moments, and random sampling
 - Data profiling: Benford, Zipf, Pareto, normality, uniformity, outliers, correlation matrices, trends, growth rates, and `DatasetProfiler.profile(_:)`
 
 ## Example Usage
@@ -108,13 +127,25 @@ Implemented:
 import SwiftNumerica
 
 let values = Tensor.vector([1, 2, 3, 4, 5])
-let mean = Numerica.Statistics.mean(values)
-let p90 = Numerica.Statistics.quantile(values, probability: 0.9)
+let mean = values.mean()
+let p95 = values.percentile(95)
 let profile = DatasetProfiler.profile(values)
 
 let normal = Numerica.Probability.NormalDistribution()
 let densityAtZero = normal?.pdf(0)
 let simulatedValues = normal?.sample(count: 1_000)
+
+let test = tTest(.vector([8, 9, 10]), .vector([1, 2, 3]))
+let pValue = test?.pValue
+
+let solution = minimize(
+    function: { point in
+        let x = point[0] - 3
+        let y = point[1] + 2
+        return x * x + y * y
+    },
+    initialGuess: [0, 0]
+)
 
 let features = Tensor.matrix([[0], [1], [2], [3]])!
 let target = Tensor.vector([0, 0, 1, 1])
@@ -154,6 +185,7 @@ The CI workflow validates this packaging contract by creating a separate consume
 GitHub Actions workflows live in `.github/workflows`.
 
 - `CI` builds the package, runs tests, and validates package consumption from another Swift package in one job.
+- `MLX Adapter` builds the optional `Adapters/SwiftNumericaMLX` package separately when adapter or core sources change.
 - `Release` can run when a `v*` tag is pushed or manually through `workflow_dispatch`.
 - Manual releases require an existing semantic tag such as `v0.1.0`.
 - Release builds run `swift build -c release` and `swift test` before creating the GitHub Release.
@@ -162,12 +194,12 @@ The release workflow uses the repository `GITHUB_TOKEN` with `contents: write` p
 
 ## Roadmap
 
-- Accelerate, SIMD, MLX, Metal, BLAS, and LAPACK backends
-- Matrix operations, PCA, SVD, and decompositions
-- Additional probability distributions and fitting routines
-- Regularized, generalized, and multiclass regression models
-- More statistical tests and distribution fitting
-- Adapter packages for DataFrames, CSV, SQL, and other data sources
+See [ROADMAP.md](ROADMAP.md) for the detailed phase plan.
+
+Near-term priorities:
+
+- Expand regression with model-oriented APIs and polynomial regression.
+- Grow linear algebra, simulation, and data-science adapters without weakening the tensor-first numerical core.
 
 ## Contribution Guidelines
 

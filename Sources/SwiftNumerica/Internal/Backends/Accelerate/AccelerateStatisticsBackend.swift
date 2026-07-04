@@ -5,6 +5,54 @@ import Accelerate
 internal struct AccelerateStatisticsBackend: StatisticsBackend {
     private let reference = PureSwiftStatisticsBackend()
 
+    internal func sum(_ tensor: Tensor<Double>) -> Double? {
+        guard !tensor.values.isEmpty else {
+            return nil
+        }
+
+        #if canImport(Accelerate)
+        var result = 0.0
+        tensor.values.withUnsafeBufferPointer { buffer in
+            vDSP_sveD(buffer.baseAddress!, 1, &result, vDSP_Length(buffer.count))
+        }
+        return result
+        #else
+        return accelerateUnavailable()
+        #endif
+    }
+
+    internal func min(_ tensor: Tensor<Double>) -> Double? {
+        guard !tensor.values.isEmpty else {
+            return nil
+        }
+
+        #if canImport(Accelerate)
+        var result = 0.0
+        tensor.values.withUnsafeBufferPointer { buffer in
+            vDSP_minvD(buffer.baseAddress!, 1, &result, vDSP_Length(buffer.count))
+        }
+        return result
+        #else
+        return accelerateUnavailable()
+        #endif
+    }
+
+    internal func max(_ tensor: Tensor<Double>) -> Double? {
+        guard !tensor.values.isEmpty else {
+            return nil
+        }
+
+        #if canImport(Accelerate)
+        var result = 0.0
+        tensor.values.withUnsafeBufferPointer { buffer in
+            vDSP_maxvD(buffer.baseAddress!, 1, &result, vDSP_Length(buffer.count))
+        }
+        return result
+        #else
+        return accelerateUnavailable()
+        #endif
+    }
+
     internal func mean(_ tensor: Tensor<Double>) -> Double? {
         guard !tensor.values.isEmpty else {
             return nil
@@ -55,7 +103,7 @@ internal struct AccelerateStatisticsBackend: StatisticsBackend {
         tensor.values.withUnsafeBufferPointer { buffer in
             vDSP_measqvD(buffer.baseAddress!, 1, &meanSquare, vDSP_Length(buffer.count))
         }
-        return max(0, meanSquare - mean * mean)
+        return Swift.max(0, meanSquare - mean * mean)
         #else
         return accelerateUnavailable()
         #endif
@@ -116,8 +164,34 @@ internal struct AccelerateStatisticsBackend: StatisticsBackend {
     internal func quantile(_ tensor: Tensor<Double>, probability: Double) -> Double? {
         reference.quantile(tensor, probability: probability)
     }
+
+    internal func percentile(_ tensor: Tensor<Double>, percentile: Double) -> Double? {
+        reference.percentile(tensor, percentile: percentile)
+    }
+
+    internal func interquartileRange(_ tensor: Tensor<Double>) -> Double? {
+        reference.interquartileRange(tensor)
+    }
+
     internal func zScore(value: Double, mean: Double, standardDeviation: Double) -> Double? {
         reference.zScore(value: value, mean: mean, standardDeviation: standardDeviation)
+    }
+
+    internal func populationCovariance(_ x: Tensor<Double>, _ y: Tensor<Double>) -> Double? {
+        #if canImport(Accelerate)
+        covariance(x, y, denominator: x.count)
+        #else
+        accelerateUnavailable()
+        #endif
+    }
+
+    internal func sampleCovariance(_ x: Tensor<Double>, _ y: Tensor<Double>) -> Double? {
+        guard x.count > 1 else { return nil }
+        #if canImport(Accelerate)
+        return covariance(x, y, denominator: x.count - 1)
+        #else
+        return accelerateUnavailable()
+        #endif
     }
 
     internal func pearsonCorrelation(_ x: Tensor<Double>, _ y: Tensor<Double>) -> Double? {
@@ -184,6 +258,16 @@ internal struct AccelerateStatisticsBackend: StatisticsBackend {
     }
 
     #if canImport(Accelerate)
+    private func covariance(_ x: Tensor<Double>, _ y: Tensor<Double>, denominator: Int) -> Double? {
+        guard x.count == y.count, x.count > 0,
+              let xMean = mean(x),
+              let yMean = mean(y) else { return nil }
+
+        let xCentered = centeredValues(x.values, mean: xMean)
+        let yCentered = centeredValues(y.values, mean: yMean)
+        return dot(xCentered, yCentered) / Double(denominator)
+    }
+
     private func centeredValues(_ values: [Double], mean: Double) -> [Double] {
         var offset = -mean
         var result = Array(repeating: 0.0, count: values.count)

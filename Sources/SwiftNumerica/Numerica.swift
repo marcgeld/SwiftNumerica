@@ -6,9 +6,6 @@ public enum ComputeBackend: Sendable {
     /// The Accelerate backend.
     case accelerate
 
-    /// The MLX backend.
-    case mlx
-
     /// Automatically selects the fastest available backend.
     case automatic
 }
@@ -21,8 +18,6 @@ public extension ComputeBackend {
             true
         case .accelerate:
             BackendAvailability.isAccelerateAvailable
-        case .mlx:
-            BackendAvailability.isMLXAvailable
         case .automatic:
             true
         }
@@ -82,4 +77,9 @@ public extension Numerica {
 public extension Numerica {
     /// Data profiling primitives for numerical tensors.
     enum DataProfiling {}
+}
+
+public extension Numerica {
+    /// Numerical optimization routines such as minimization and maximization.
+    enum Optimization {}
 }

@@ -6,6 +6,16 @@ public extension Numerica.Probability {
         /// The expected event rate.
         public let lambda: Double
 
+        /// The analytical mean of the distribution.
+        public var mean: Double {
+            lambda
+        }
+
+        /// The analytical variance of the distribution.
+        public var variance: Double {
+            lambda
+        }
+
         /// Creates a Poisson distribution.
         ///
         /// - Returns: `nil` when `lambda` is not positive.
@@ -25,6 +35,23 @@ public extension Numerica.Probability {
         public func cdf(_ value: Int) -> Double {
             guard value >= 0 else { return 0 }
             return (0...value).map(pmf).reduce(0, +)
+        }
+
+        /// Evaluates the inverse cumulative distribution function.
+        public func inverseCDF(_ probability: Double) -> Int? {
+            guard (0...1).contains(probability) else { return nil }
+            if probability == 0 { return 0 }
+            if probability == 1 { return nil }
+
+            var value = 0
+            var mass = Foundation.exp(-lambda)
+            var cumulative = mass
+            while cumulative < probability {
+                value += 1
+                mass *= lambda / Double(value)
+                cumulative += mass
+            }
+            return value
         }
 
         /// Evaluates probability mass at a value.
