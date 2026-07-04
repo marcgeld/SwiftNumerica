@@ -123,6 +123,10 @@ if let result = tTest(sampleA, sampleB) {
 
 ### Phase 4: Regression
 
+Status: implemented for lightweight namespace functions and model-oriented
+estimators. Future work can add diagnostics, regularization, and richer model
+summaries.
+
 Regression APIs should support a model-oriented interface while preserving the
 current lightweight namespace functions where useful.
 
@@ -136,7 +140,7 @@ Example target API:
 
 ```swift
 let model = LinearRegression()
-model.fit(x, y)
+let result = model.fit(x, y)
 ```
 
 ### Phase 5: Numerical Optimization

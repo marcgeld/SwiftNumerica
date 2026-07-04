@@ -115,7 +115,7 @@ Implemented:
 - Descriptive statistics: sum, min, max, mean, median, mode, range, population/sample variance, population/sample standard deviation, skewness, excess kurtosis, quantile, percentile, interquartile range, and z-score
 - Correlation and covariance: Pearson, Spearman, population/sample covariance, and convenience correlation/covariance aliases
 - Statistical tests: Welch t-test, paired t-test, chi-square goodness-of-fit, one-way ANOVA, and two-sided Mann-Whitney U
-- Regression: simple linear regression, multiple linear regression, and binary logistic regression
+- Regression: simple linear, multiple linear, polynomial, and binary logistic regression with lightweight functions and model-oriented estimators
 - Optimization: `minimize` and `maximize` with gradient descent, Newton-Raphson, LBFGS, and Nelder-Mead
 - Combinatorics: factorial, combinations, permutations
 - Probability: tensor-based discrete expected value plus normal, uniform, Poisson, exponential, binomial, beta, gamma, and hypergeometric distributions with CDFs, inverse CDFs, analytical moments, and random sampling
@@ -147,9 +147,16 @@ let solution = minimize(
     initialGuess: [0, 0]
 )
 
+let linear = LinearRegression()
+let line = linear.fit(.vector([1, 2, 3]), .vector([3, 5, 7]))
+
+let polynomial = PolynomialRegression(degree: 2)
+let curve = polynomial?.fit(.vector([-1, 0, 1]), .vector([2, 1, 6]))
+
 let features = Tensor.matrix([[0], [1], [2], [3]])!
 let target = Tensor.vector([0, 0, 1, 1])
-let classifier = Numerica.Statistics.logisticRegression(features: features, target: target)
+let classifier = LogisticRegression(learningRate: 0.5, iterations: 2_000)?
+    .fit(features: features, target: target)
 ```
 
 ## Using SwiftNumerica From Another Package
@@ -198,7 +205,6 @@ See [ROADMAP.md](ROADMAP.md) for the detailed phase plan.
 
 Near-term priorities:
 
-- Expand regression with model-oriented APIs and polynomial regression.
 - Grow linear algebra, simulation, and data-science adapters without weakening the tensor-first numerical core.
 
 ## Contribution Guidelines

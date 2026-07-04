@@ -18,6 +18,17 @@ public extension Numerica.Statistics {
             self.intercept = intercept
             self.rSquared = rSquared
         }
+
+        /// Predicts a response for a scalar predictor.
+        public func predict(_ x: Double) -> Double {
+            intercept + slope * x
+        }
+
+        /// Predicts responses for a vector tensor of predictors.
+        public func predict(_ x: Tensor<Double>) -> Tensor<Double>? {
+            guard x.rank == 1 else { return nil }
+            return .vector(x.values.map(predict))
+        }
     }
 
     /// Fits a simple linear regression model.
@@ -116,6 +127,141 @@ public extension Numerica.Statistics {
         iterations: Int = 1_000
     ) -> LogisticRegressionResult? {
         try? BackendResolver.statisticsBackend().logisticRegression(
+            features: features,
+            target: target,
+            learningRate: learningRate,
+            iterations: iterations
+        )
+    }
+
+    /// The result of a polynomial regression.
+    struct PolynomialRegressionResult: Equatable, Sendable {
+        /// Coefficients in ascending power order.
+        ///
+        /// `coefficients[0]` is the intercept, `coefficients[1]` is the linear
+        /// coefficient, and so on.
+        public let coefficients: [Double]
+
+        /// The polynomial degree.
+        public let degree: Int
+
+        /// The coefficient of determination.
+        public let rSquared: Double
+
+        /// Creates a polynomial regression result.
+        public init(coefficients: [Double], degree: Int, rSquared: Double) {
+            self.coefficients = coefficients
+            self.degree = degree
+            self.rSquared = rSquared
+        }
+
+        /// Predicts a response for a scalar predictor.
+        public func predict(_ x: Double) -> Double {
+            var result = 0.0
+            var power = 1.0
+            for coefficient in coefficients {
+                result += coefficient * power
+                power *= x
+            }
+            return result
+        }
+
+        /// Predicts responses for a vector tensor of predictors.
+        public func predict(_ x: Tensor<Double>) -> Tensor<Double>? {
+            guard x.rank == 1 else { return nil }
+            return .vector(x.values.map(predict))
+        }
+    }
+
+    /// Fits a polynomial regression model using a one-dimensional predictor.
+    static func polynomialRegression(
+        x: Tensor<Double>,
+        y: Tensor<Double>,
+        degree: Int
+    ) -> PolynomialRegressionResult? {
+        PolynomialRegression(degree: degree)?.fit(x, y)
+    }
+}
+
+/// A model-oriented simple linear regression estimator.
+public struct LinearRegression: Equatable, Sendable {
+    /// Creates a linear regression estimator.
+    public init() {}
+
+    /// Fits a simple linear regression model.
+    public func fit(_ x: Tensor<Double>, _ y: Tensor<Double>) -> Numerica.Statistics.LinearRegressionResult? {
+        Numerica.Statistics.linearRegression(x: x, y: y)
+    }
+}
+
+/// A model-oriented polynomial regression estimator.
+public struct PolynomialRegression: Equatable, Sendable {
+    /// The polynomial degree.
+    public let degree: Int
+
+    /// Creates a polynomial regression estimator.
+    ///
+    /// - Parameter degree: The polynomial degree. Must be non-negative.
+    public init?(degree: Int) {
+        guard degree >= 0 else { return nil }
+        self.degree = degree
+    }
+
+    /// Fits a polynomial regression model.
+    public func fit(_ x: Tensor<Double>, _ y: Tensor<Double>) -> Numerica.Statistics.PolynomialRegressionResult? {
+        guard x.rank == 1,
+              y.rank == 1,
+              x.count == y.count,
+              x.count > degree,
+              x.values.allSatisfy(\.isFinite),
+              y.values.allSatisfy(\.isFinite) else { return nil }
+
+        if degree == 0 {
+            guard let mean = Numerica.Statistics.mean(y) else { return nil }
+            let totalSumSquares = y.values.map { value in
+                let difference = value - mean
+                return difference * difference
+            }.reduce(0.0) { $0 + $1 }
+            return .init(coefficients: [mean], degree: degree, rSquared: totalSumSquares == 0 ? 1 : 0)
+        }
+
+        let rows = x.values.map { value in
+            (1...degree).map { power in Foundation.pow(value, Double(power)) }
+        }
+        guard let features = Tensor.matrix(rows),
+              let result = Numerica.Statistics.multipleLinearRegression(features: features, target: y) else {
+            return nil
+        }
+
+        return .init(
+            coefficients: [result.intercept] + result.coefficients,
+            degree: degree,
+            rSquared: result.rSquared
+        )
+    }
+}
+
+/// A model-oriented binary logistic regression estimator.
+public struct LogisticRegression: Equatable, Sendable {
+    /// The gradient descent learning rate.
+    public let learningRate: Double
+
+    /// The number of training iterations.
+    public let iterations: Int
+
+    /// Creates a logistic regression estimator.
+    public init?(learningRate: Double = 0.1, iterations: Int = 1_000) {
+        guard learningRate > 0, iterations > 0 else { return nil }
+        self.learningRate = learningRate
+        self.iterations = iterations
+    }
+
+    /// Fits a binary logistic regression model.
+    public func fit(
+        features: Tensor<Double>,
+        target: Tensor<Double>
+    ) -> Numerica.Statistics.LogisticRegressionResult? {
+        Numerica.Statistics.logisticRegression(
             features: features,
             target: target,
             learningRate: learningRate,
