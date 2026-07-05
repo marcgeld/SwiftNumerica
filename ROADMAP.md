@@ -267,7 +267,12 @@ let values = table?.numericColumn("value")
 
 ### Phase 9: Signal Processing
 
-Status: planned.
+Status: implemented for tensor-first one-dimensional signal APIs, including
+`Signal`, FFT/IFFT, convolution, correlation, autocorrelation, moving average,
+window functions, detrending, normalization, zero-crossing rate, peak detection,
+periodogram, magnitude/phase spectra, FIR filters, and direct-form biquad
+filtering. Future work can add Accelerate/vDSP specializations behind the same
+public API where they improve runtime or allocations.
 
 Signal processing should provide practical one-dimensional DSP operations over
 `Tensor<Double>` and lightweight value types. APIs should stay strongly typed,
@@ -310,7 +315,8 @@ Spectral analysis:
 - Magnitude and phase spectrum helpers
 
 Future work can add resampling, interpolation, overlap-add convolution,
-short-time Fourier transforms, spectrograms, and multichannel signal helpers.
+short-time Fourier transforms, spectrograms, multichannel signal helpers, and
+dedicated vDSP FFT/convolution kernels.
 
 Example target API:
 

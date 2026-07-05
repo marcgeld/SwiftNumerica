@@ -53,6 +53,7 @@ Sources/
     ├── Optimization
     ├── LinearAlgebra
     ├── Simulation
+    ├── SignalProcessing
     ├── DataScience
     ├── Combinatorics
     ├── DataProfiling
@@ -63,6 +64,8 @@ Sources/
 Adapters/
 └── SwiftNumericaMLX
     └── Optional MLX conversion package
+Examples/
+└── Standalone executable example package
 ```
 
 ## Backend Architecture
@@ -122,14 +125,11 @@ Implemented:
 - Optimization: `minimize` and `maximize` with gradient descent, Newton-Raphson, LBFGS, and Nelder-Mead
 - Linear algebra: `Matrix`, `Vector`, determinant, inverse, solve, and real symmetric eigenvalues/eigenvectors
 - Simulation: Monte Carlo simulations, additive random walks, and finite-state Markov chains
+- Signal processing: `Signal`, FFT/IFFT, convolution, correlation, autocorrelation, window functions, moving average, detrending, normalization, peak detection, periodogram, spectra, FIR filters, and biquad filtering
 - Data science integration: `DataTable`, CSV import/export, optional `TabularData.DataFrame` bridges, statistical summaries, and group-by aggregations
 - Combinatorics: factorial, combinations, permutations
 - Probability: tensor-based discrete expected value plus normal, uniform, Poisson, exponential, binomial, beta, gamma, and hypergeometric distributions with CDFs, inverse CDFs, analytical moments, and random sampling
 - Data profiling: Benford, Zipf, Pareto, normality, uniformity, outliers, correlation matrices, trends, growth rates, and `DatasetProfiler.profile(_:)`
-
-Planned:
-
-- Signal processing: tensor-first DSP APIs for FFT/IFFT, convolution, correlation, window functions, filtering, spectral analysis, smoothing, detrending, peak detection, and related signal utilities
 
 ## Example Usage
 
@@ -181,6 +181,11 @@ let weather = MarkovChain(
 )
 let forecast = weather?.simulate(startingAt: "sunny", steps: 7)
 
+let signal = Signal([1, 0, -1, 0], sampleRate: 4)
+let spectrum = signal?.fft()
+let smoothed = signal?.movingAverage(windowSize: 3)
+let peaks = signal?.peaks()
+
 let table = DataTable.importCSV("""
 group,value
 a,1
@@ -202,6 +207,93 @@ let target = Tensor.vector([0, 0, 1, 1])
 let classifier = LogisticRegression(learningRate: 0.5, iterations: 2_000)?
     .fit(features: features, target: target)
 ```
+
+## Standalone Examples
+
+Phase 10 will add complete, standalone executable examples for the public API.
+These examples are separate from the short README sample above. Their purpose is
+to be copy-pasteable, runnable, and useful as both human documentation and
+machine-readable implementation guidance.
+
+Examples should live in a separate Swift package under `Examples/`:
+
+```text
+Examples/
+├── Package.swift
+├── README.md
+└── Sources/
+    ├── MeanExample/
+    │   └── main.swift
+    ├── WelchTTestExample/
+    │   └── main.swift
+    ├── NormalDistributionExample/
+    │   └── main.swift
+    └── FFTExample/
+        └── main.swift
+```
+
+Each example target must be runnable on its own:
+
+```bash
+cd Examples
+swift run FFTExample
+```
+
+Each `main.swift` must be complete and self-contained:
+
+- Import `SwiftNumerica`.
+- Include a short documentation comment explaining what the example shows.
+- Include a reference link when a stable educational source exists, preferably
+  Wikipedia.
+- Use small, deterministic input data.
+- Print the input, the computed output, and one short interpretation.
+- Avoid shared helper files at first, so every example remains standalone.
+- Keep the example focused on one public function, method, or type whenever
+  practical.
+
+Example format:
+
+```swift
+import SwiftNumerica
+
+// Fast Fourier transform:
+// https://en.wikipedia.org/wiki/Fast_Fourier_transform
+//
+// This example shows how a cosine-like waveform is transformed from the
+// time domain into the frequency domain.
+
+let signal = Signal([1, 0, -1, 0], sampleRate: 4)
+
+guard let spectrum = signal?.fft() else {
+    fatalError("Unable to compute FFT.")
+}
+
+let magnitudes = spectrum.values.map(\.magnitude)
+
+print("Input samples:", signal?.values ?? [])
+print("Magnitude spectrum:", magnitudes)
+print("The largest magnitudes indicate the dominant frequency components.")
+```
+
+Useful reference links include:
+
+- Arithmetic mean: <https://en.wikipedia.org/wiki/Arithmetic_mean>
+- Median: <https://en.wikipedia.org/wiki/Median>
+- Variance: <https://en.wikipedia.org/wiki/Variance>
+- Standard deviation: <https://en.wikipedia.org/wiki/Standard_deviation>
+- Covariance: <https://en.wikipedia.org/wiki/Covariance>
+- Correlation: <https://en.wikipedia.org/wiki/Correlation>
+- Normal distribution: <https://en.wikipedia.org/wiki/Normal_distribution>
+- Student's t-test: <https://en.wikipedia.org/wiki/Student%27s_t-test>
+- Chi-squared test: <https://en.wikipedia.org/wiki/Chi-squared_test>
+- Analysis of variance: <https://en.wikipedia.org/wiki/Analysis_of_variance>
+- Mann-Whitney U test: <https://en.wikipedia.org/wiki/Mann%E2%80%93Whitney_U_test>
+- Linear regression: <https://en.wikipedia.org/wiki/Linear_regression>
+- Gradient descent: <https://en.wikipedia.org/wiki/Gradient_descent>
+- Fast Fourier transform: <https://en.wikipedia.org/wiki/Fast_Fourier_transform>
+- Convolution: <https://en.wikipedia.org/wiki/Convolution>
+- Window function: <https://en.wikipedia.org/wiki/Window_function>
+- Markov chain: <https://en.wikipedia.org/wiki/Markov_chain>
 
 ## Using SwiftNumerica From Another Package
 
@@ -249,7 +341,8 @@ See [ROADMAP.md](ROADMAP.md) for the detailed phase plan.
 
 Near-term priorities:
 
-- Implement Phase 9 `SignalProcessing` with tensor-first APIs backed by Accelerate/vDSP where it clearly helps.
+- Implement Phase 10 standalone executable examples for public APIs.
+- Add Accelerate/vDSP specializations for `SignalProcessing` internals where they clearly improve runtime or allocations.
 - Broaden production polish, numerical validation, and integration ergonomics without weakening the tensor-first numerical core.
 
 ## Contribution Guidelines
@@ -261,6 +354,8 @@ Near-term priorities:
 - Prefer value types, `Sendable`, composition, and protocols.
 - Add DocC comments for public APIs.
 - Add Swift Testing coverage for implemented functionality.
+- Add standalone examples for new public APIs when Phase 10 example coverage is
+  introduced.
 - Reuse mathematical primitives instead of duplicating formulas.
 - Update this README whenever architecture, modules, or design decisions change.
 

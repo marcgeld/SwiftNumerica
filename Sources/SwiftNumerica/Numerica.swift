@@ -95,6 +95,11 @@ public extension Numerica {
 }
 
 public extension Numerica {
+    /// Signal processing routines including transforms, filters, and spectral analysis.
+    enum SignalProcessing {}
+}
+
+public extension Numerica {
     /// Data science adapters for CSV, tabular data, summaries, and grouping.
     enum DataScience {}
 }
