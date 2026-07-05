@@ -39,21 +39,9 @@ internal struct PureSwiftLinearAlgebraBackend: LinearAlgebraBackend {
     }
 
     internal func inverse(_ matrix: Matrix) -> Matrix? {
-        guard matrix.isSquare else { return nil }
-        let dimension = matrix.rowCount
-        var columns: [[Double]] = []
-
-        for column in 0..<dimension {
-            var basis = Array(repeating: 0.0, count: dimension)
-            basis[column] = 1
-            guard let solution = LinearSystemMath.solve(matrix.rows, basis) else { return nil }
-            columns.append(solution)
-        }
-
-        let rows = (0..<dimension).map { row in
-            columns.map { $0[row] }
-        }
-        return Matrix(rows)
+        guard matrix.isSquare,
+              let inverted = LinearSystemMath.invert(matrix.rows) else { return nil }
+        return Matrix(inverted)
     }
 
     internal func solve(_ matrix: Matrix, _ vector: Vector) -> Vector? {
@@ -132,7 +120,13 @@ internal struct PureSwiftLinearAlgebraBackend: LinearAlgebraBackend {
     private func isSymmetric(_ matrix: Matrix) -> Bool {
         for row in 0..<matrix.rowCount {
             for column in (row + 1)..<matrix.columnCount {
-                if Swift.abs(matrix[row, column] - matrix[column, row]) > 1e-10 {
+                let upper = matrix[row, column]
+                let lower = matrix[column, row]
+                // Scale the tolerance by the element magnitudes so large
+                // matrices are not rejected for representation-level noise,
+                // while small elements keep an absolute 1e-10 tolerance.
+                let scale = Swift.max(Swift.abs(upper), Swift.abs(lower), 1)
+                if Swift.abs(upper - lower) > 1e-10 * scale {
                     return false
                 }
             }

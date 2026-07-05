@@ -121,4 +121,24 @@ import TabularData
     )
     #expect(numericRoundTrip.numericColumn("value")?.values == [1, 2])
 }
+
+@Test func dataFrameBridgeReturnsNilForMissingOrMistypedColumns() throws {
+    let table = try #require(
+        DataTable(
+            columns: ["group", "value"],
+            rows: [
+                ["a", "1"],
+                ["b", "2"],
+            ]
+        ))
+    let frame = table.dataFrame()
+
+    #expect(DataTable(dataFrame: frame, stringColumns: ["missing"]) == nil)
+    #expect(DataTable(dataFrame: frame, numericColumns: ["missing"]) == nil)
+    // Every bridged column is string-typed, so requesting it as numeric must fail.
+    #expect(DataTable(dataFrame: frame, numericColumns: ["value"]) == nil)
+
+    let numericFrame = try #require(table.numericDataFrame(columns: ["value"]))
+    #expect(DataTable(dataFrame: numericFrame, stringColumns: ["value"]) == nil)
+}
 #endif

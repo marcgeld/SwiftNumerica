@@ -257,7 +257,11 @@ public extension Numerica.Simulation {
                 }
             }
 
-            return states.last
+            // Floating-point rounding can leave the cumulative sum just below
+            // the draw. Fall back to the last state that has any probability
+            // mass so zero-probability states are never returned.
+            guard let fallbackIndex = row.lastIndex(where: { $0 > 0 }) else { return nil }
+            return states[fallbackIndex]
         }
 
         /// Simulates a state path from an initial state.

@@ -15,6 +15,17 @@ import Testing
     #expect(vector[2] == 9)
 }
 
+@Test func matrixSubscriptTrapsOnOutOfBoundsIndexes() async throws {
+    await #expect(processExitsWith: .failure) {
+        let matrix = try #require(Matrix([[1, 2], [3, 4]]))
+        _ = matrix[0, 2]
+    }
+    await #expect(processExitsWith: .failure) {
+        let matrix = try #require(Matrix([[1, 2], [3, 4]]))
+        _ = matrix[2, 0]
+    }
+}
+
 @Test func determinantInverseAndSolveUseSquareMatrixAlgebra() throws {
     let matrix = try #require(Matrix([[4, 7], [2, 6]]))
 
@@ -65,6 +76,37 @@ import Testing
 
     #expect(matrix.eigenvalues() == nil)
     #expect(matrix.eigenvectors() == nil)
+}
+
+@Test func inverseRoundTripsForLargerMatrices() throws {
+    let matrix = try #require(Matrix([[2, 1, 0], [1, 3, 1], [0, 1, 4]]))
+    let inverse = try #require(matrix.inverse())
+
+    for row in 0..<matrix.rowCount {
+        for column in 0..<matrix.columnCount {
+            let product = (0..<matrix.columnCount).map { entry in
+                matrix[row, entry] * inverse[entry, column]
+            }.reduce(0.0) { $0 + $1 }
+            let expected = row == column ? 1.0 : 0.0
+            #expect(product.isApproximatelyEqual(to: expected, tolerance: 1e-10))
+        }
+    }
+
+    #expect(try #require(Matrix([[1, 2], [2, 4]])).inverse() == nil)
+}
+
+@Test func symmetryCheckToleratesRepresentationNoiseInLargeMatrices() throws {
+    let large = 1e12
+    // Off-diagonal entries differ by ~0.1 absolutely but only 1e-13 relatively,
+    // so the matrix should still be treated as symmetric.
+    let matrix = try #require(
+        Matrix([
+            [2 * large, large * (1 + 1e-13)],
+            [large, large],
+        ]))
+
+    #expect(matrix.eigenvalues() != nil)
+    #expect(matrix.eigenvectors() != nil)
 }
 
 private func multiply(_ matrix: Matrix, by vector: [Double]) -> [Double] {

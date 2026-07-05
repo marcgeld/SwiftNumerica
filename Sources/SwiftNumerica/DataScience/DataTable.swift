@@ -270,6 +270,14 @@ public extension Numerica.DataScience.DataTable {
         guard !columns.isEmpty,
               Set(columns).count == columns.count else { return nil }
 
+        // DataFrame's typed subscript traps on missing or mistyped columns, so
+        // validate names and element types first to preserve the `init?` contract.
+        let columnTypes = Dictionary(
+            uniqueKeysWithValues: dataFrame.columns.map { ($0.name, $0.wrappedElementType) }
+        )
+        guard stringColumns.allSatisfy({ columnTypes[$0] == String.self }),
+              numericColumns.allSatisfy({ columnTypes[$0] == Double.self }) else { return nil }
+
         let stringValues = stringColumns.map { column in
             Array(dataFrame[column, String.self]).map { $0 ?? "" }
         }

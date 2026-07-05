@@ -57,7 +57,15 @@ public struct Matrix: Equatable, Sendable {
     }
 
     /// Accesses a matrix element.
+    ///
+    /// Traps when `row` or `column` is out of bounds.
     public subscript(row: Int, column: Int) -> Double {
-        values[row * columnCount + column]
+        precondition(
+            (0..<rowCount).contains(row),
+            "Matrix row index \(row) is out of bounds for \(rowCount) rows.")
+        precondition(
+            (0..<columnCount).contains(column),
+            "Matrix column index \(column) is out of bounds for \(columnCount) columns.")
+        return values[row * columnCount + column]
     }
 }
