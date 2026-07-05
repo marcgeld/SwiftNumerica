@@ -35,6 +35,8 @@ All statistics and data profiling APIs accept `Tensor<Double>`.
 
 ```text
 Sources/
+├── CNumericaLAPACK
+│   └── C shim exposing Accelerate's modern LAPACK interface
 └── SwiftNumerica
     ├── Numerica.swift
     ├── Tensor
@@ -96,6 +98,19 @@ Numerica.configuration.backend = .automatic
 ```
 
 Runtime switching exists so future benchmark and validation modules can run identical tensors through PureSwift, Accelerate, and other core backends. Accelerated backends must produce numerically equivalent results to PureSwift within documented tolerances. Backend-specific optimizations belong behind internal backend protocols such as `StatisticsBackend`, `TensorBackend`, `LinearAlgebraBackend`, `SignalProcessingBackend`, and `ProbabilityBackend`.
+
+### Why The CNumericaLAPACK C Target Exists
+
+The Accelerate linear algebra backend uses LAPACK (`dgetrf`, `dgetri`, `dgetrs`, and `dsyev`), which Accelerate ships as C routines. Apple deprecated the legacy CLAPACK interface in macOS 13.3; the modern replacement requires the `ACCELERATE_NEW_LAPACK` and `ACCELERATE_LAPACK_ILP64` macros to be defined when the Accelerate Clang module is compiled.
+
+A Swift target cannot define those macros safely:
+
+- A `#define` in source code never reaches the Clang module build, so the modern symbols such as `__LAPACK_int` stay invisible.
+- `swiftSettings: [.define(...)]` in `Package.swift` only sets Swift conditional-compilation flags for `#if` blocks and does not reach the Clang importer.
+- Passing `-Xcc -DACCELERATE_NEW_LAPACK` requires `unsafeFlags`, and Swift Package Manager refuses to resolve packages that use unsafe flags as dependencies, which would break the packaging contract validated by CI.
+- Calling the deprecated CLAPACK symbols directly from Swift works but emits deprecation warnings on every build and depends on an interface Apple may remove.
+
+A C target avoids all of this: `cSettings: [.define(...)]` is a safe setting that applies when the target compiles, so `Sources/CNumericaLAPACK` enables the modern interface and exposes thin wrapper functions that the Swift backend calls. This mirrors Apple's own documented approach in [Solving systems of linear equations with LAPACK](https://developer.apple.com/documentation/accelerate/solving-systems-of-linear-equations-with-lapack), which also wraps the LAPACK routines in helper functions. On platforms without Accelerate the target compiles to stubs that report unavailability, and the backends fall back to the PureSwift reference implementation.
 
 ## Optional MLX Adapter
 

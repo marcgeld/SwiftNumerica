@@ -162,16 +162,9 @@ public extension Numerica.SignalProcessing {
     /// Computes the full discrete convolution of two signals.
     static func convolve(_ signal: Tensor<Double>, with kernel: Tensor<Double>) -> Tensor<Double>? {
         guard isFiniteVector(signal), isFiniteVector(kernel),
-              signal.count > 0, kernel.count > 0 else { return nil }
-
-        var output = Array(repeating: 0.0, count: signal.count + kernel.count - 1)
-        for signalIndex in signal.values.indices {
-            for kernelIndex in kernel.values.indices {
-                output[signalIndex + kernelIndex] += signal.values[signalIndex] * kernel.values[kernelIndex]
-            }
-        }
-
-        return .vector(output)
+              signal.count > 0, kernel.count > 0,
+              let backend = try? BackendResolver.signalProcessingBackend() else { return nil }
+        return .vector(backend.convolve(signal.values, kernel: kernel.values))
     }
 
     /// Computes the full cross-correlation of two signals.

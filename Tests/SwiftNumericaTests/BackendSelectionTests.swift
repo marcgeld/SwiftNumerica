@@ -231,6 +231,95 @@ struct BackendSelectionTests {
         }
     }
 
+    @Test func pureSwiftAndAccelerateLinearAlgebraAreEquivalent() throws {
+        let matrix = try #require(Matrix([[4, 7, 2], [2, 6, 3], [1, 5, 9]]))
+        let vector = Vector([1, 0, 2])
+        let symmetric = try #require(Matrix([[4, 1, 2], [1, 5, 3], [2, 3, 6]]))
+        let singular = try #require(Matrix([[1, 2], [2, 4]]))
+
+        Numerica.configuration.backend = .pureSwift
+        let pureDeterminant = try #require(Numerica.LinearAlgebra.determinant(matrix))
+        let pureInverse = try #require(Numerica.LinearAlgebra.inverse(matrix))
+        let pureSolution = try #require(Numerica.LinearAlgebra.solve(matrix, vector))
+        let pureEigenvalues = try #require(Numerica.LinearAlgebra.eigenvalues(symmetric))
+
+        Numerica.configuration.backend = .accelerate
+        let accelerateDeterminant = try #require(Numerica.LinearAlgebra.determinant(matrix))
+        let accelerateInverse = try #require(Numerica.LinearAlgebra.inverse(matrix))
+        let accelerateSolution = try #require(Numerica.LinearAlgebra.solve(matrix, vector))
+        let accelerateEigenvalues = try #require(Numerica.LinearAlgebra.eigenvalues(symmetric))
+        let accelerateEigenvectors = try #require(Numerica.LinearAlgebra.eigenvectors(symmetric))
+
+        #expect(accelerateDeterminant.isApproximatelyEqual(to: pureDeterminant, tolerance: 1e-9))
+        for row in 0..<matrix.rowCount {
+            for column in 0..<matrix.columnCount {
+                #expect(
+                    accelerateInverse[row, column]
+                        .isApproximatelyEqual(to: pureInverse[row, column], tolerance: 1e-9))
+            }
+        }
+        for index in 0..<vector.count {
+            #expect(
+                accelerateSolution.values[index]
+                    .isApproximatelyEqual(to: pureSolution.values[index], tolerance: 1e-9))
+        }
+        for index in 0..<pureEigenvalues.count {
+            #expect(
+                accelerateEigenvalues[index]
+                    .isApproximatelyEqual(to: pureEigenvalues[index], tolerance: 1e-9))
+        }
+
+        // Eigenvector signs are arbitrary, so verify the eigenvector equation
+        // and unit length instead of comparing components across backends.
+        for column in 0..<accelerateEigenvectors.columnCount {
+            let eigenvector = (0..<accelerateEigenvectors.rowCount).map {
+                accelerateEigenvectors[$0, column]
+            }
+            var normSquared = 0.0
+            for row in 0..<symmetric.rowCount {
+                let product = (0..<symmetric.columnCount).reduce(0.0) {
+                    $0 + symmetric[row, $1] * eigenvector[$1]
+                }
+                #expect(
+                    product.isApproximatelyEqual(
+                        to: accelerateEigenvalues[column] * eigenvector[row], tolerance: 1e-9))
+                normSquared += eigenvector[row] * eigenvector[row]
+            }
+            #expect(normSquared.squareRoot().isApproximatelyEqual(to: 1, tolerance: 1e-9))
+        }
+
+        // Singular and non-symmetric inputs keep the reference semantics.
+        #expect(try #require(Numerica.LinearAlgebra.determinant(singular)).isApproximatelyEqual(to: 0))
+        #expect(Numerica.LinearAlgebra.inverse(singular) == nil)
+        #expect(Numerica.LinearAlgebra.solve(singular, Vector([1, 2])) == nil)
+        #expect(Numerica.LinearAlgebra.eigenvalues(matrix) == nil)
+    }
+
+    @Test func pureSwiftAndAccelerateConvolutionIsEquivalent() throws {
+        let signal = Tensor.vector([1, 2, 3, 4, 5, -1, -2, 0.5])
+        let kernel = Tensor.vector([2, -1, 0.5])
+
+        Numerica.configuration.backend = .pureSwift
+        let pureConvolved = try #require(Numerica.SignalProcessing.convolve(signal, with: kernel))
+        let pureCorrelated = try #require(Numerica.SignalProcessing.correlate(signal, with: kernel))
+
+        Numerica.configuration.backend = .accelerate
+        let accelerateConvolved = try #require(
+            Numerica.SignalProcessing.convolve(signal, with: kernel))
+        let accelerateCorrelated = try #require(
+            Numerica.SignalProcessing.correlate(signal, with: kernel))
+
+        #expect(pureConvolved.values.count == accelerateConvolved.values.count)
+        for index in pureConvolved.values.indices {
+            #expect(
+                accelerateConvolved.values[index]
+                    .isApproximatelyEqual(to: pureConvolved.values[index]))
+            #expect(
+                accelerateCorrelated.values[index]
+                    .isApproximatelyEqual(to: pureCorrelated.values[index]))
+        }
+    }
+
     @Test func accelerateVarianceIsNumericallyStableForLargeOffsets() throws {
         let offset = 100_000_000.0
         let tensor = Tensor.vector([2, 4, 4, 4, 5, 5, 7, 9].map { $0 + offset })
@@ -246,27 +335,4 @@ struct BackendSelectionTests {
         #expect(accelerateVariance.isApproximatelyEqual(to: pureVariance, tolerance: 1e-6))
     }
 
-    @Test func pureSwiftAndAccelerateLinearAlgebraAreEquivalent() throws {
-        let matrix = try #require(Matrix([[4, 7], [2, 6]]))
-        let vector = Vector([1, 0])
-        let symmetric = try #require(Matrix([[2, 1], [1, 2]]))
-
-        Numerica.configuration.backend = .pureSwift
-        let pureDeterminant = try #require(Numerica.LinearAlgebra.determinant(matrix))
-        let pureSolution = try #require(Numerica.LinearAlgebra.solve(matrix, vector))
-        let pureEigenvalues = try #require(Numerica.LinearAlgebra.eigenvalues(symmetric))
-
-        Numerica.configuration.backend = .accelerate
-        let accelerateDeterminant = try #require(Numerica.LinearAlgebra.determinant(matrix))
-        let accelerateSolution = try #require(Numerica.LinearAlgebra.solve(matrix, vector))
-        let accelerateEigenvalues = try #require(Numerica.LinearAlgebra.eigenvalues(symmetric))
-
-        #expect(accelerateDeterminant.isApproximatelyEqual(to: pureDeterminant))
-        for (accelerateValue, pureValue) in zip(accelerateSolution.values, pureSolution.values) {
-            #expect(accelerateValue.isApproximatelyEqual(to: pureValue))
-        }
-        for (accelerateValue, pureValue) in zip(accelerateEigenvalues, pureEigenvalues) {
-            #expect(accelerateValue.isApproximatelyEqual(to: pureValue))
-        }
-    }
 }

@@ -183,9 +183,11 @@ if let solution = minimize(
 ### Phase 6: Linear Algebra
 
 Status: implemented for dense `Matrix` and `Vector` APIs, determinant, inverse,
-linear system solving, and real symmetric eigenvalues/eigenvectors. Future work
-can add LAPACK-backed specializations, nonsymmetric eigenvalue support, matrix
-factorizations, and batched operations.
+linear system solving, and real symmetric eigenvalues/eigenvectors. The
+Accelerate backend executes these through LAPACK (dgetrf/dgetri/dgetrs/dsyev)
+via the `CNumericaLAPACK` shim target, which enables Apple's modern
+`ACCELERATE_NEW_LAPACK` interface. Future work can add nonsymmetric eigenvalue
+support, matrix factorizations, and batched operations.
 
 Linear algebra should provide Swift-friendly `Matrix` and `Vector` APIs backed
 by Accelerate, BLAS, and LAPACK where beneficial.
@@ -274,8 +276,10 @@ periodogram, magnitude/phase spectra, FIR filters, and direct-form biquad
 filtering. FFT/IFFT run in O(n log n) for every length through a
 `SignalProcessingBackend` protocol: the PureSwift reference uses radix-2
 Cooley-Tukey for powers of two and Bluestein's chirp-z algorithm otherwise, and
-the Accelerate backend executes supported lengths with vDSP DFT. Future work can
-add vDSP-backed convolution and filtering behind the same public API.
+the Accelerate backend executes supported lengths with vDSP DFT. Convolution
+(and with it correlation, autocorrelation, and FIR filtering) runs through the
+same backend protocol with a vDSP implementation. Future work can add
+FFT-based convolution for very long kernels and vDSP-backed biquad filtering.
 
 Signal processing should provide practical one-dimensional DSP operations over
 `Tensor<Double>` and lightweight value types. APIs should stay strongly typed,
@@ -415,6 +419,6 @@ change.
 
 ## Success Criterion
 
-SwiftNumerica should become the default Swift package for statistics,
+SwiftNumerica should become a known Swift package for statistics,
 probability, optimization, signal processing, and scientific computing on Apple
 Silicon.

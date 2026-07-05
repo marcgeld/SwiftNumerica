@@ -23,6 +23,38 @@ internal struct AccelerateSignalProcessingBackend: SignalProcessingBackend {
         #endif
     }
 
+    internal func convolve(_ signal: [Double], kernel: [Double]) -> [Double] {
+        #if canImport(Accelerate)
+        let signalCount = signal.count
+        let kernelCount = kernel.count
+        let outputCount = signalCount + kernelCount - 1
+
+        // vDSP_convD computes correlation over a fully padded input; a negative
+        // kernel stride starting at the last coefficient turns it into
+        // convolution.
+        var padded = [Double](repeating: 0, count: signalCount + 2 * (kernelCount - 1))
+        padded.replaceSubrange((kernelCount - 1)..<(kernelCount - 1 + signalCount), with: signal)
+
+        var output = [Double](repeating: 0, count: outputCount)
+        padded.withUnsafeBufferPointer { paddedBuffer in
+            kernel.withUnsafeBufferPointer { kernelBuffer in
+                output.withUnsafeMutableBufferPointer { outputBuffer in
+                    vDSP_convD(
+                        paddedBuffer.baseAddress!, 1,
+                        kernelBuffer.baseAddress! + (kernelCount - 1), -1,
+                        outputBuffer.baseAddress!, 1,
+                        vDSP_Length(outputCount),
+                        vDSP_Length(kernelCount)
+                    )
+                }
+            }
+        }
+        return output
+        #else
+        return reference.convolve(signal, kernel: kernel)
+        #endif
+    }
+
     internal func inverseFFT(_ spectrum: [Numerica.SignalProcessing.ComplexNumber]) -> [Double] {
         #if canImport(Accelerate)
         guard let setup = DFTSetupCache.shared.setup(count: spectrum.count, forward: false) else {

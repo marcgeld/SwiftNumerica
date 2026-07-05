@@ -117,7 +117,7 @@ internal struct PureSwiftLinearAlgebraBackend: LinearAlgebraBackend {
         return sortedEigenDecomposition(values: diagonalizedDiagonal(diagonalized), vectors: eigenvectors)
     }
 
-    private func isSymmetric(_ matrix: Matrix) -> Bool {
+    internal func isSymmetric(_ matrix: Matrix) -> Bool {
         for row in 0..<matrix.rowCount {
             for column in (row + 1)..<matrix.columnCount {
                 let upper = matrix[row, column]

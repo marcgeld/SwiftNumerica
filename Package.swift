@@ -20,7 +20,21 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "SwiftNumerica"
+            name: "CNumericaLAPACK",
+            cSettings: [
+                .define("ACCELERATE_NEW_LAPACK"),
+                .define("ACCELERATE_LAPACK_ILP64"),
+            ],
+            linkerSettings: [
+                .linkedFramework(
+                    "Accelerate",
+                    .when(platforms: [.macOS, .iOS, .tvOS, .watchOS, .visionOS])
+                )
+            ]
+        ),
+        .target(
+            name: "SwiftNumerica",
+            dependencies: ["CNumericaLAPACK"]
         ),
         .testTarget(
             name: "SwiftNumericaTests",

@@ -21,6 +21,16 @@ internal struct PureSwiftSignalProcessingBackend: SignalProcessingBackend {
         return real.map { $0 * scale }
     }
 
+    internal func convolve(_ signal: [Double], kernel: [Double]) -> [Double] {
+        var output = Array(repeating: 0.0, count: signal.count + kernel.count - 1)
+        for signalIndex in signal.indices {
+            for kernelIndex in kernel.indices {
+                output[signalIndex + kernelIndex] += signal[signalIndex] * kernel[kernelIndex]
+            }
+        }
+        return output
+    }
+
     /// Computes an unscaled complex DFT in O(n log n) for any length: radix-2
     /// Cooley-Tukey for powers of two and Bluestein's chirp-z algorithm
     /// otherwise. Callers scale inverse transforms by `1 / count`.
