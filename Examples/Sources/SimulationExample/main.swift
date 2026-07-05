@@ -48,5 +48,5 @@ let next = chain.nextState(from: "sunny", using: &generator)
 let path = chain.simulate(startingAt: "sunny", steps: 5)
 
 print("Next weather state:", next ?? "unknown")
-print("Weather path:", path?.path ?? [])
-print("State counts:", path?.stateCounts ?? [:])
+print("Weather path count:", path?.path.count ?? 0)
+print("State count total:", path?.stateCounts.values.reduce(0, +) ?? 0)

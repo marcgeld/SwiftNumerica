@@ -329,30 +329,55 @@ let peaks = signal.peaks()
 
 ### Phase 10: Standalone Executable Examples
 
-Status: implemented for a first standalone examples package covering public API
-families across tensors, statistics, probability, hypothesis testing,
-regression, optimization, linear algebra, simulation, signal processing,
-data science, data profiling, combinatorics, and backend configuration.
+Status: implemented with standalone examples and a symbol-to-example coverage
+matrix. The examples cover public API families across tensors, statistics,
+probability, hypothesis testing, regression, optimization, linear algebra,
+simulation, signal processing, data science, data profiling, combinatorics, and
+backend configuration.
 
 Examples live in a separate Swift package under `Examples/`. Each example is an
 executable target with its own complete `main.swift`, imports `SwiftNumerica`,
 uses deterministic input data, prints output and interpretation, and links to a
 stable educational reference such as Wikipedia when available.
 
+`Examples/COVERAGE.md` maps public symbols to the executable target that
+demonstrates them. `Examples/EXPECTED_OUTPUT.md` records the expected results
+for each executable target, using approximate language for floating point output
+and semantic checks for intentionally random helpers.
+
 Implemented example targets:
 
 - `BackendConfigurationExample`
 - `CombinatoricsExample`
+- `ContinuousDistributionsExample`
 - `CorrelationCovarianceExample`
+- `DataProfilingLawsExample`
+- `DataProfilingQualityExample`
 - `DataProfilingExample`
+- `DataScienceCSVExample`
+- `DataScienceGroupingExample`
 - `DataScienceExample`
+- `DescriptiveCentralTendencyExample`
+- `DescriptiveDispersionExample`
+- `DescriptiveOrderStatisticsExample`
+- `DescriptiveShapeExample`
 - `DescriptiveStatisticsExample`
+- `DiscreteDistributionsExample`
 - `DistributionFittingExample`
+- `ExpectedValueExample`
 - `HypothesisTestingExample`
 - `LinearAlgebraExample`
+- `LinearRegressionExample`
+- `LogisticRegressionExample`
+- `MarkovChainExample`
+- `MonteCarloSimulationExample`
+- `MultipleLinearRegressionExample`
 - `OptimizationExample`
+- `PolynomialRegressionExample`
 - `ProbabilityDistributionsExample`
+- `RandomWalkExample`
 - `RegressionExample`
+- `SignalProcessingConvolutionExample`
 - `SignalProcessingFiltersExample`
 - `SignalProcessingTransformsExample`
 - `SimulationExample`
@@ -365,8 +390,9 @@ cd Examples
 swift run SignalProcessingTransformsExample
 ```
 
-Future work can split broad examples into even smaller one-function examples
-where that improves clarity.
+Future work should keep `Examples/COVERAGE.md` and
+`Examples/EXPECTED_OUTPUT.md` current whenever public symbols or example output
+change.
 
 ## Backend Strategy
 

@@ -221,16 +221,27 @@ Examples live in a separate Swift package under `Examples/`:
 Examples/
 ├── Package.swift
 ├── README.md
+├── COVERAGE.md
+├── EXPECTED_OUTPUT.md
 └── Sources/
-    ├── DescriptiveStatisticsExample/
+    ├── DescriptiveCentralTendencyExample/
+    │   └── main.swift
+    ├── ContinuousDistributionsExample/
     │   └── main.swift
     ├── HypothesisTestingExample/
     │   └── main.swift
-    ├── ProbabilityDistributionsExample/
+    ├── SignalProcessingConvolutionExample/
     │   └── main.swift
-    └── SignalProcessingTransformsExample/
+    └── ...
         └── main.swift
 ```
+
+`Examples/COVERAGE.md` maps public symbols to the example targets that
+demonstrate them. `Examples/EXPECTED_OUTPUT.md` records the expected results for
+each executable example. The package contains both broad overview examples and
+smaller focused examples for dense API areas such as descriptive statistics,
+probability distributions, regression, simulation, data science, data profiling,
+and signal processing.
 
 Each example target must be runnable on its own:
 
@@ -247,6 +258,8 @@ Each `main.swift` must be complete and self-contained:
   Wikipedia.
 - Use small, deterministic input data.
 - Print the input, the computed output, and one short interpretation.
+- Include expected results in the print label for simple deterministic values,
+  or document them in `EXPECTED_OUTPUT.md` for longer or approximate output.
 - Avoid shared helper files at first, so every example remains standalone.
 - Keep the example focused on one public function, method, or type whenever
   practical.

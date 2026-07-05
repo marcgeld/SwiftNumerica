@@ -33,11 +33,22 @@ for algorithm in [
         initialGuess: [0, 0],
         options: options
     )
-    print("Minimize with", algorithm, "->", result?.solution ?? [], result?.value ?? .nan, result?.reason ?? .invalidInput)
+    print(
+        "Minimize with",
+        algorithm,
+        "->",
+        result?.solution ?? [],
+        result?.value ?? .nan,
+        result?.iterations ?? 0,
+        result?.converged ?? false,
+        result?.reason ?? .invalidInput
+    )
 }
 
+let namespaceMaximize = Numerica.Optimization.maximize(function: { -bowl($0) }, initialGuess: [0, 0])
 let freeMinimize = minimize(function: bowl, initialGuess: [0, 0])
 let freeMaximize = maximize(function: { -bowl($0) }, initialGuess: [0, 0])
 
+print("Namespace maximize:", namespaceMaximize?.solution ?? [], namespaceMaximize?.value ?? .nan)
 print("Free minimize:", freeMinimize?.solution ?? [], freeMinimize?.value ?? .nan)
 print("Free maximize:", freeMaximize?.solution ?? [], freeMaximize?.value ?? .nan)
