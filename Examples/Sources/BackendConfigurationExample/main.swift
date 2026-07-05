@@ -6,21 +6,28 @@ import SwiftNumerica
 // This example shows how to inspect and switch SwiftNumerica compute backends.
 
 let data = Tensor.vector([1, 2, 3, 4])
+let defaultBackend = Numerica.configuration.backend
+let accelerateAvailable = ComputeBackend.accelerate.isAvailable
 
-print("Default backend:", Numerica.configuration.backend)
-print("Accelerate available:", ComputeBackend.accelerate.isAvailable)
+print("Default backend (expected automatic): \(defaultBackend)")
+print("Accelerate available (expected true on Apple platforms with Accelerate): \(accelerateAvailable)")
 
 Numerica.configuration.backend = .pureSwift
-print("Pure Swift mean:", Numerica.Statistics.mean(data) ?? .nan)
+let pureSwiftMean = Numerica.Statistics.mean(data)
+print("Pure Swift mean (expected (1 + 2 + 3 + 4) / 4 = 2.5): \(pureSwiftMean ?? .nan)")
 
 Numerica.configuration.backend = .automatic
-print("Resolved automatic backend:", try Numerica.resolvedBackend())
-print("Automatic mean:", Numerica.Statistics.mean(data) ?? .nan)
+let resolvedBackend = try Numerica.resolvedBackend()
+let automaticMean = Numerica.Statistics.mean(data)
+print("Resolved automatic backend (expected accelerate when available, otherwise pureSwift): \(resolvedBackend)")
+print("Automatic mean (expected same mean = 2.5): \(automaticMean ?? .nan)")
 
-if ComputeBackend.accelerate.isAvailable {
+if accelerateAvailable {
     Numerica.configuration.backend = .accelerate
-    print("Accelerate mean:", Numerica.Statistics.mean(data) ?? .nan)
+    let accelerateMean = Numerica.Statistics.mean(data)
+    print("Accelerate mean (expected same mean = 2.5): \(accelerateMean ?? .nan)")
 }
 
 Numerica.configuration = NumericaConfiguration()
-print("Reset backend:", Numerica.configuration.backend)
+let resetBackend = Numerica.configuration.backend
+print("Reset backend (expected automatic): \(resetBackend)")

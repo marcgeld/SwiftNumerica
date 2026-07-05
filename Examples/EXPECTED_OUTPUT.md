@@ -18,9 +18,9 @@ properties such as `is finite` or sample counts instead of exact random values.
 ## CombinatoricsExample
 
 ```text
-5! (expected 120): 120
-10 choose 3 (expected 120): 120
-10 permute 3 (expected 720): 720
+5! (expected 5 x 4 x 3 x 2 x 1 = 120): 120
+10 choose 3 (expected 10! / (3! x 7!) = 120): 120
+10 permute 3 (expected 10 x 9 x 8 = 720): 720
 ```
 
 ## ContinuousDistributionsExample
@@ -38,14 +38,14 @@ properties such as `is finite` or sample counts instead of exact random values.
 ## CorrelationCovarianceExample
 
 ```text
-Population covariance: 4.0
-Sample covariance: 5.0
-Covariance alias: 5.0
-Pearson correlation: 1.0
-Spearman correlation: 1.0
-Correlation alias: 1.0
-Value-style covariance: 5.0
-Value-style correlation: 1.0
+Population covariance (expected average paired deviation product = 4): 4.0
+Sample covariance (expected population covariance scaled by 5 / 4 = 5): 5.0
+Covariance alias (expected sample covariance = 5): 5.0
+Pearson correlation (expected perfect positive linear relationship = 1): 1.0
+Spearman correlation (expected identical ranks = 1): 1.0
+Correlation alias (expected Pearson correlation = 1): 1.0
+Value-style covariance (expected same as alias = 5): 5.0
+Value-style correlation (expected same as alias = 1): 1.0
 ```
 
 ## DataProfilingLawsExample
@@ -118,46 +118,46 @@ x,y
 ## DescriptiveCentralTendencyExample
 
 ```text
-Sum: 40.0
-Minimum: 2.0
-Maximum: 9.0
-Mean: 5.0
-Median: 4.5
-Mode: [4.0]
-Value-style mean: 5.0
-Value-style median: 4.5
+Sum (expected 2 + 4 + 4 + 4 + 5 + 5 + 7 + 9 = 40): 40.0
+Minimum (expected smallest value = 2): 2.0
+Maximum (expected largest value = 9): 9.0
+Mean (expected 40 / 8 = 5): 5.0
+Median (expected average of middle values 4 and 5 = 4.5): 4.5
+Mode (expected most frequent value [4]): [4.0]
+Value-style mean (expected same as namespace mean = 5): 5.0
+Value-style median (expected same as namespace median = 4.5): 4.5
 ```
 
 ## DescriptiveDispersionExample
 
 ```text
-Range: 7.0
-Population variance: 4.0
-Sample variance: 4.571428571428571
-Variance alias: 4.571428571428571
-Population standard deviation: 2.0
-Sample standard deviation: 2.138089935299395
-Standard deviation alias: 2.138089935299395
-Z-score for 9: 2.0
+Range (expected 9 - 2 = 7): 7.0
+Population variance (expected sum squared deviations / 8 = 4): 4.0
+Sample variance (expected sum squared deviations / 7 = 4.571428571428571): 4.571428571428571
+Variance alias (expected sample variance = 4.571428571428571): 4.571428571428571
+Population standard deviation (expected sqrt(4) = 2): 2.0
+Sample standard deviation (expected sqrt(4.571428571428571) = 2.138089935299395): 2.138089935299395
+Standard deviation alias (expected sample standard deviation = 2.138089935299395): 2.138089935299395
+Z-score for 9 (expected (9 - 5) / 2 = 2): 2.0
 ```
 
 ## DescriptiveOrderStatisticsExample
 
 ```text
-First quartile: 4.0
-Median percentile: 4.5
-95th percentile: 8.299999999999999
-Interquartile range: 1.5
-Value-style interquartile range: 1.5
+First quartile (expected 25th percentile = 4): 4.0
+Median percentile (expected 50th percentile = 4.5): 4.5
+95th percentile (expected interpolated value = 8.299999999999999): 8.299999999999999
+Interquartile range (expected Q3 - Q1 = 5.5 - 4 = 1.5): 1.5
+Value-style interquartile range (expected same value = 1.5): 1.5
 ```
 
 ## DescriptiveShapeExample
 
 ```text
-Skewness: 1.1419277952951876
-Excess kurtosis: -0.10357001972386737
-Value-style skewness: 1.1419277952951876
-Value-style kurtosis: -0.10357001972386737
+Skewness (expected approximately 1.1419277952951876): 1.1419277952951876
+Excess kurtosis (expected approximately -0.10357001972386737): -0.10357001972386737
+Value-style skewness (expected same value): 1.1419277952951876
+Value-style kurtosis (expected same value): -0.10357001972386737
 ```
 
 ## DescriptiveStatisticsExample
@@ -185,17 +185,17 @@ Value-style kurtosis: -0.10357001972386737
 ## DistributionFittingExample
 
 ```text
-Fitted normal mean/std: 10.0 1.4142135623730951
-Fitted uniform bounds: -2.0 3.0
-Fitted exponential rate: 1.3333333333333333
-Kolmogorov-Smirnov statistic: 0.16025000815237345
-Kolmogorov-Smirnov p-value: 0.9983903404822662
+Fitted normal mean/std (expected mean 10, sample std sqrt(2) = 1.4142135623730951): 10.0 1.4142135623730951
+Fitted uniform bounds (expected min -2, max 3): -2.0 3.0
+Fitted exponential rate (expected 1 / sample mean 0.75 = 1.3333333333333333): 1.3333333333333333
+Kolmogorov-Smirnov statistic (expected approximately 0.16025000815237345): 0.16025000815237345
+Kolmogorov-Smirnov p-value (expected approximately 0.9983903404822662): 0.9983903404822662
 ```
 
 ## ExpectedValueExample
 
 ```text
-Expected value: 11.0
+Expected value (expected 0 x 0.2 + 10 x 0.5 + 20 x 0.3 = 11): 11.0
 ```
 
 ## HypothesisTestingExample
@@ -221,12 +221,12 @@ Expected value: 11.0
 ## LinearRegressionExample
 
 ```text
-Slope: 2.0
-Intercept: 1.0
-R squared: 1.0
-Scalar prediction: 9.0
-Vector prediction: [9.0, 11.0]
-Model fit prediction: 9.0
+Slope (expected line y = 2x + 1, slope = 2): 2.0
+Intercept (expected line y = 2x + 1, intercept = 1): 1.0
+R squared (expected perfect fit = 1): 1.0
+Scalar prediction for x = 4 (expected 2 x 4 + 1 = 9): 9.0
+Vector prediction for x = [4, 5] (expected [9, 11]): [9.0, 11.0]
+Model fit prediction for x = 4 (expected 9): 9.0
 ```
 
 ## LogisticRegressionExample
@@ -255,10 +255,10 @@ Model fit prediction: 9.0
 ## MultipleLinearRegressionExample
 
 ```text
-Coefficients: [3.0, 3.0]
-Intercept: 3.0
-R squared: 1.0
-Prediction: 15.0
+Coefficients (expected [3, 3] for y = 3 + 3x1 + 3x2): [3.0, 3.0]
+Intercept (expected 3): 3.0
+R squared (expected perfect fit = 1): 1.0
+Prediction for [2, 2] (expected 3 + 3 x 2 + 3 x 2 = 15): 15.0
 ```
 
 ## OptimizationExample
@@ -273,11 +273,11 @@ Prediction: 15.0
 ## PolynomialRegressionExample
 
 ```text
-Degree: 2
-Coefficients: [1.0000000000000004, 2.0, 2.9999999999999996]
-R squared: 1.0
-Scalar prediction: 17.0
-Vector prediction: [17.0, 34.0]
+Degree (expected quadratic degree = 2): 2
+Coefficients (expected approximately [1, 2, 3] for 1 + 2x + 3x^2): [1.0000000000000004, 2.0, 2.9999999999999996]
+R squared (expected perfect fit = 1): 1.0
+Scalar prediction for x = 2 (expected 1 + 2 x 2 + 3 x 2^2 = 17): 17.0
+Vector prediction for x = [2, 3] (expected [17, 34]): [17.0, 34.0]
 ```
 
 ## ProbabilityDistributionsExample
@@ -309,11 +309,11 @@ Vector prediction: [17.0, 34.0]
 ## SignalProcessingConvolutionExample
 
 ```text
-Convolution: [0.25, 1.0, 2.0, 3.0, 2.75, 1.0]
-Correlation: [0.25, 1.0, 2.0, 3.0, 2.75, 1.0]
-Autocorrelation: [4.0, 11.0, 20.0, 30.0, 20.0, 11.0, 4.0]
-Moving average: [1.5, 2.0, 3.0, 3.5]
-Rectangular window: [1.0, 1.0, 1.0, 1.0]
+Convolution (expected [0.25, 1, 2, 3, 2.75, 1]): [0.25, 1.0, 2.0, 3.0, 2.75, 1.0]
+Correlation (expected same as convolution for this symmetric kernel): [0.25, 1.0, 2.0, 3.0, 2.75, 1.0]
+Autocorrelation (expected [4, 11, 20, 30, 20, 11, 4]): [4.0, 11.0, 20.0, 30.0, 20.0, 11.0, 4.0]
+Moving average (expected [1.5, 2, 3, 3.5]): [1.5, 2.0, 3.0, 3.5]
+Rectangular window (expected four ones): [1.0, 1.0, 1.0, 1.0]
 ```
 
 ## SignalProcessingFiltersExample

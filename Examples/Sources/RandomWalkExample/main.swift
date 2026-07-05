@@ -24,6 +24,6 @@ let random = walk.simulate(steps: 5, using: &generator) { rng in
 let distribution = walk.simulate(steps: 5, using: &generator, increments: normal)
 let deterministic = walk.simulate(steps: 5) { 1 }
 
-print("Random path:", random?.path.values ?? [])
-print("Distribution path:", distribution?.path.values ?? [])
-print("Deterministic final value:", deterministic?.finalValue ?? .nan)
+print("Random path (expected fixed-generator path [0, -1, -2, -1, 0, 1]): \(random?.path.values ?? [])")
+print("Distribution path (expected starts at 0 and contains 6 values): \(distribution?.path.values ?? [])")
+print("Deterministic final value (expected 0 + five steps of 1 = 5): \(deterministic?.finalValue ?? .nan)")

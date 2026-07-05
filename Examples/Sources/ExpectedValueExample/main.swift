@@ -11,4 +11,4 @@ let expectedValue = Numerica.Probability.ExpectedValue.discrete(values: values, 
 
 print("Values:", values.values)
 print("Probabilities:", probabilities.values)
-print("Expected value:", expectedValue ?? .nan)
+print("Expected value (expected 0 x 0.2 + 10 x 0.5 + 20 x 0.3 = 11): \(expectedValue ?? .nan)")

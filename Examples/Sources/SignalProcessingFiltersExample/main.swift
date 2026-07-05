@@ -13,12 +13,12 @@ let bandPass = Numerica.SignalProcessing.bandPassFilter(signal, lowCutoffFrequen
 let bandStop = Numerica.SignalProcessing.bandStopFilter(signal, lowCutoffFrequency: 1, highCutoffFrequency: 2, sampleRate: 10, filterLength: 5)!
 let biquad = BiquadFilter(b0: 1, b1: 0, b2: 0, a1: 0, a2: 0)!
 let biquadOutput = Numerica.SignalProcessing.apply(biquad, to: signal)!
+let biquadValueStyle = biquad.applied(to: signal)
 
-print("Input:", signal.values)
-print("Low-pass:", lowPass.values)
-print("High-pass:", highPass.values)
-print("Band-pass:", bandPass.values)
-print("Band-stop:", bandStop.values)
-print("Biquad identity:", biquadOutput.values)
-print("Biquad value-style:", biquad.applied(to: signal)?.values ?? [])
-
+print("Input (expected seven-sample signal): \(signal.values)")
+print("Low-pass (expected deterministic FIR output for cutoff 1 Hz): \(lowPass.values)")
+print("High-pass (expected deterministic FIR output for cutoff 1 Hz): \(highPass.values)")
+print("Band-pass (expected deterministic FIR output for 1-2 Hz): \(bandPass.values)")
+print("Band-stop (expected deterministic FIR output for 1-2 Hz): \(bandStop.values)")
+print("Biquad identity (expected same as input): \(biquadOutput.values)")
+print("Biquad value-style (expected same as direct apply): \(biquadValueStyle?.values ?? [])")

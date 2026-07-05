@@ -14,13 +14,14 @@ let normal = Numerica.Statistics.DistributionAnalysis.fitNormal(normalSample)
 let uniform = Numerica.Statistics.DistributionAnalysis.fitUniform(uniformSample)
 let exponential = Numerica.Statistics.DistributionAnalysis.fitExponential(exponentialSample)
 
-print("Fitted normal mean/std:", normal?.mean ?? .nan, normal?.standardDeviation ?? .nan)
-print("Fitted uniform bounds:", uniform?.lowerBound ?? .nan, uniform?.upperBound ?? .nan)
-print("Fitted exponential rate:", exponential?.rate ?? .nan)
+print("Fitted normal mean/std (expected mean 10, sample std sqrt(2) = 1.4142135623730951): \(normal?.mean ?? .nan) \(normal?.standardDeviation ?? .nan)")
+print("Fitted uniform bounds (expected min -2, max 3): \(uniform?.lowerBound ?? .nan) \(uniform?.upperBound ?? .nan)")
+print("Fitted exponential rate (expected 1 / sample mean 0.75 = 1.3333333333333333): \(exponential?.rate ?? .nan)")
 
 if let normal {
     let result = HypothesisTesting.kolmogorovSmirnovTest(normalSample, distribution: normal)
-    print("Kolmogorov-Smirnov statistic:", result?.statistic ?? .nan)
-    print("Kolmogorov-Smirnov p-value:", result?.pValue ?? .nan)
+    let statistic = result?.statistic
+    let pValue = result?.pValue
+    print("Kolmogorov-Smirnov statistic (expected approximately 0.16025000815237345): \(statistic ?? .nan)")
+    print("Kolmogorov-Smirnov p-value (expected approximately 0.9983903404822662): \(pValue ?? .nan)")
 }
-

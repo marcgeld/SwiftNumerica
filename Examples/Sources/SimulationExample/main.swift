@@ -22,8 +22,8 @@ let monteCarloResult = monteCarlo.run(using: &generator) {
 }
 let closureResult = monteCarlo.run { 0.5 }
 
-print("Monte Carlo random estimates:", monteCarloResult?.estimates.values ?? [])
-print("Monte Carlo constant mean:", closureResult?.mean ?? .nan)
+print("Monte Carlo random estimates (expected fixed-generator sequence with 5 values): \(monteCarloResult?.estimates.values ?? [])")
+print("Monte Carlo constant mean (expected five estimates of 0.5 -> mean 0.5): \(closureResult?.mean ?? .nan)")
 
 let walk = RandomWalk(initialValue: 0)!
 let walkResult = walk.simulate(steps: 5, using: &generator) { rng in
@@ -33,9 +33,9 @@ let normal = Numerica.Probability.NormalDistribution(mean: 0, standardDeviation:
 let distributionWalk = walk.simulate(steps: 5, using: &generator, increments: normal)
 let deterministicWalk = walk.simulate(steps: 5) { 1 }
 
-print("Random walk path:", walkResult?.path.values ?? [])
-print("Distribution walk path:", distributionWalk?.path.values ?? [])
-print("Deterministic walk final value:", deterministicWalk?.finalValue ?? .nan)
+print("Random walk path (expected fixed-generator path [0, -1, 0, -1, 0, -1]): \(walkResult?.path.values ?? [])")
+print("Distribution walk path (expected starts at 0 and contains 6 values): \(distributionWalk?.path.values ?? [])")
+print("Deterministic walk final value (expected 0 + five steps of 1 = 5): \(deterministicWalk?.finalValue ?? .nan)")
 
 let chain = MarkovChain(
     states: ["sunny", "rainy"],
@@ -47,6 +47,6 @@ let chain = MarkovChain(
 let next = chain.nextState(from: "sunny", using: &generator)
 let path = chain.simulate(startingAt: "sunny", steps: 5)
 
-print("Next weather state:", next ?? "unknown")
-print("Weather path count:", path?.path.count ?? 0)
-print("State count total:", path?.stateCounts.values.reduce(0, +) ?? 0)
+print("Next weather state (expected fixed-generator state sunny): \(next ?? "unknown")")
+print("Weather path count (expected initial state + 5 steps = 6): \(path?.path.count ?? 0)")
+print("State count total (expected 6): \(path?.stateCounts.values.reduce(0, +) ?? 0)")

@@ -258,8 +258,12 @@ Each `main.swift` must be complete and self-contained:
   Wikipedia.
 - Use small, deterministic input data.
 - Print the input, the computed output, and one short interpretation.
+- Assign computed results to named values before printing when that improves
+  readability.
 - Include expected results in the print label for simple deterministic values,
-  or document them in `EXPECTED_OUTPUT.md` for longer or approximate output.
+  preferably with the formula, for example
+  `print("5! (expected 5 x 4 x 3 x 2 x 1 = 120): \(value)")`.
+  Document longer or approximate output in `EXPECTED_OUTPUT.md`.
 - Avoid shared helper files at first, so every example remains standalone.
 - Keep the example focused on one public function, method, or type whenever
   practical.
