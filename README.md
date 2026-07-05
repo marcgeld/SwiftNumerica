@@ -52,6 +52,7 @@ Sources/
     ├── Probability
     ├── Optimization
     ├── LinearAlgebra
+    ├── Simulation
     ├── Combinatorics
     ├── DataProfiling
     └── Internal
@@ -119,6 +120,7 @@ Implemented:
 - Regression: simple linear, multiple linear, polynomial, and binary logistic regression with lightweight functions and model-oriented estimators
 - Optimization: `minimize` and `maximize` with gradient descent, Newton-Raphson, LBFGS, and Nelder-Mead
 - Linear algebra: `Matrix`, `Vector`, determinant, inverse, solve, and real symmetric eigenvalues/eigenvectors
+- Simulation: Monte Carlo simulations, additive random walks, and finite-state Markov chains
 - Combinatorics: factorial, combinations, permutations
 - Probability: tensor-based discrete expected value plus normal, uniform, Poisson, exponential, binomial, beta, gamma, and hypergeometric distributions with CDFs, inverse CDFs, analytical moments, and random sampling
 - Data profiling: Benford, Zipf, Pareto, normality, uniformity, outliers, correlation matrices, trends, growth rates, and `DatasetProfiler.profile(_:)`
@@ -153,6 +155,25 @@ let matrix = Matrix([[4, 7], [2, 6]])!
 let determinant = matrix.determinant()
 let inverse = matrix.inverse()
 let linearSolution = matrix.solve(Vector([1, 0]))
+
+let monteCarlo = MonteCarloSimulation(iterations: 10_000)
+let estimate = monteCarlo?.run {
+    Double.random(in: 0...1)
+}
+
+let walk = RandomWalk(initialValue: 0)
+let path = walk?.simulate(steps: 100) {
+    Bool.random() ? 1 : -1
+}
+
+let weather = MarkovChain(
+    states: ["sunny", "rainy"],
+    transitionProbabilities: [
+        [0.8, 0.2],
+        [0.4, 0.6],
+    ]
+)
+let forecast = weather?.simulate(startingAt: "sunny", steps: 7)
 
 let linear = LinearRegression()
 let line = linear.fit(.vector([1, 2, 3]), .vector([3, 5, 7]))
@@ -212,7 +233,7 @@ See [ROADMAP.md](ROADMAP.md) for the detailed phase plan.
 
 Near-term priorities:
 
-- Grow simulation and data-science adapters without weakening the tensor-first numerical core.
+- Grow data-science adapters without weakening the tensor-first numerical core.
 
 ## Contribution Guidelines
 

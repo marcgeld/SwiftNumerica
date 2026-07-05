@@ -204,6 +204,11 @@ let x = matrix.solve(Vector([1, 0]))
 
 ### Phase 7: Simulation
 
+Status: implemented for Monte Carlo expected-value estimation, one-dimensional
+additive random walks, and finite-state discrete-time Markov chains. Future work
+can add higher-dimensional walks, stochastic processes, event simulation, and
+batch summaries.
+
 Simulation APIs should compose with distributions and tensors while keeping
 randomness explicit and testable.
 
@@ -212,6 +217,15 @@ Target APIs:
 - `MonteCarloSimulation`
 - `RandomWalk`
 - `MarkovChain`
+
+Example target API:
+
+```swift
+let simulation = MonteCarloSimulation(iterations: 10_000)
+let estimate = simulation?.run {
+    Double.random(in: 0...1)
+}
+```
 
 ### Phase 8: Data Science Integration
 

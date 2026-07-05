@@ -88,3 +88,8 @@ public extension Numerica {
     /// Linear algebra routines for vectors and dense matrices.
     enum LinearAlgebra {}
 }
+
+public extension Numerica {
+    /// Simulation routines including Monte Carlo, random walks, and Markov chains.
+    enum Simulation {}
+}
