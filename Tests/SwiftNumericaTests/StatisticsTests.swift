@@ -207,6 +207,44 @@ import Testing
     #expect(try #require(values.interquartileRange()).isApproximatelyEqual(to: 2))
 }
 
+@Test func distributionAnalysisFitsContinuousDistributions() throws {
+    let normal = try #require(
+        Numerica.Statistics.DistributionAnalysis.fitNormal(.vector([8, 10, 12])))
+    #expect(normal.mean.isApproximatelyEqual(to: 10))
+    #expect(normal.standardDeviation.isApproximatelyEqual(to: (8.0 / 3.0).squareRoot()))
+
+    let uniform = try #require(
+        Numerica.Statistics.DistributionAnalysis.fitUniform(.vector([-2, 1, 4])))
+    #expect(uniform.lowerBound.isApproximatelyEqual(to: -2))
+    #expect(uniform.upperBound.isApproximatelyEqual(to: 4))
+
+    let exponential = try #require(
+        Numerica.Statistics.DistributionAnalysis.fitExponential(.vector([0.5, 1, 1.5])))
+    #expect(exponential.rate.isApproximatelyEqual(to: 1))
+}
+
+@Test func distributionAnalysisRejectsInvalidFits() {
+    #expect(Numerica.Statistics.DistributionAnalysis.fitNormal(.vector([2, 2, 2])) == nil)
+    #expect(Numerica.Statistics.DistributionAnalysis.fitUniform(.vector([2, 2, 2])) == nil)
+    #expect(Numerica.Statistics.DistributionAnalysis.fitExponential(.vector([-1, 1, 2])) == nil)
+}
+
+@Test func distributionAnalysisComputesKolmogorovSmirnovGoodnessOfFit() throws {
+    let sample = Tensor.vector([0.1, 0.3, 0.5, 0.7, 0.9])
+    let distribution = try #require(
+        Numerica.Probability.UniformDistribution(lowerBound: 0, upperBound: 1))
+
+    let result = try #require(
+        Numerica.Statistics.DistributionAnalysis.kolmogorovSmirnovTest(
+            sample,
+            distribution: distribution
+        ))
+
+    #expect(result.sampleSize == 5)
+    #expect(result.statistic.isApproximatelyEqual(to: 0.1, tolerance: 1e-12))
+    #expect((0...1).contains(result.pValue))
+}
+
 extension Double {
     func isApproximatelyEqual(to expected: Double, tolerance: Double = 1e-12) -> Bool {
         abs(self - expected) <= tolerance
