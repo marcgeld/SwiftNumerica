@@ -235,14 +235,14 @@ import Testing
         Numerica.Probability.UniformDistribution(lowerBound: 0, upperBound: 1))
 
     let result = try #require(
-        Numerica.Statistics.DistributionAnalysis.kolmogorovSmirnovTest(
+        HypothesisTesting.kolmogorovSmirnovTest(
             sample,
             distribution: distribution
         ))
 
-    #expect(result.sampleSize == 5)
     #expect(result.statistic.isApproximatelyEqual(to: 0.1, tolerance: 1e-12))
     #expect((0...1).contains(result.pValue))
+    #expect(result.method == "One-sample Kolmogorov-Smirnov test")
 }
 
 extension Double {

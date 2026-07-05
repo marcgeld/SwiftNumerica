@@ -47,7 +47,7 @@ Sources/
     │   ├── Descriptive
     │   ├── Correlation
     │   ├── Regression
-    │   ├── Tests
+    │   ├── HypothesisTesting
     │   └── DistributionAnalysis
     ├── Probability
     ├── Optimization
@@ -117,7 +117,7 @@ Implemented:
 - Tensor reshaping with row-major storage preservation
 - Descriptive statistics: sum, min, max, mean, median, mode, range, population/sample variance, population/sample standard deviation, skewness, excess kurtosis, quantile, percentile, interquartile range, and z-score
 - Correlation and covariance: Pearson, Spearman, population/sample covariance, and convenience correlation/covariance aliases
-- Statistical tests: Welch t-test, paired t-test, chi-square goodness-of-fit, one-way ANOVA, and two-sided Mann-Whitney U
+- Hypothesis testing: Welch t-test, paired t-test, chi-square goodness-of-fit, one-way ANOVA, Mann-Whitney U, and Kolmogorov-Smirnov goodness-of-fit with typed results
 - Regression: simple linear, multiple linear, polynomial, and binary logistic regression with lightweight functions and model-oriented estimators
 - Optimization: `minimize` and `maximize` with gradient descent, Newton-Raphson, LBFGS, and Nelder-Mead
 - Linear algebra: `Matrix`, `Vector`, determinant, inverse, solve, and real symmetric eigenvalues/eigenvectors
@@ -126,6 +126,10 @@ Implemented:
 - Combinatorics: factorial, combinations, permutations
 - Probability: tensor-based discrete expected value plus normal, uniform, Poisson, exponential, binomial, beta, gamma, and hypergeometric distributions with CDFs, inverse CDFs, analytical moments, and random sampling
 - Data profiling: Benford, Zipf, Pareto, normality, uniformity, outliers, correlation matrices, trends, growth rates, and `DatasetProfiler.profile(_:)`
+
+Planned:
+
+- Signal processing: tensor-first DSP APIs for FFT/IFFT, convolution, correlation, window functions, filtering, spectral analysis, smoothing, detrending, peak detection, and related signal utilities
 
 ## Example Usage
 
@@ -141,7 +145,7 @@ let normal = Numerica.Probability.NormalDistribution()
 let densityAtZero = normal?.pdf(0)
 let simulatedValues = normal?.sample(count: 1_000)
 
-let test = tTest(.vector([8, 9, 10]), .vector([1, 2, 3]))
+let test = HypothesisTesting.welchTTest(.vector([8, 9, 10]), .vector([1, 2, 3]))
 let pValue = test?.pValue
 
 let solution = minimize(
@@ -245,6 +249,7 @@ See [ROADMAP.md](ROADMAP.md) for the detailed phase plan.
 
 Near-term priorities:
 
+- Implement Phase 9 `SignalProcessing` with tensor-first APIs backed by Accelerate/vDSP where it clearly helps.
 - Broaden production polish, numerical validation, and integration ergonomics without weakening the tensor-first numerical core.
 
 ## Contribution Guidelines

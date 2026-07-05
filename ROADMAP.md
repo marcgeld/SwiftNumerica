@@ -14,8 +14,8 @@ to become a full SciPy clone.
   data structures.
 - Avoid Python-style dynamic APIs, untyped dictionaries, and stringly typed
   configuration.
-- Focus on practical statistics, probability, optimization, simulation, and
-  linear algebra workflows.
+- Focus on practical statistics, probability, optimization, simulation, signal
+  processing, and linear algebra workflows.
 - Keep the numerical core tensor-first. DataFrame, CSV, SQL, and file-format
   integration belongs in adapters or clearly separated integration modules.
 - Keep MLX as an optional adapter package, not a dependency of the SwiftNumerica
@@ -90,33 +90,38 @@ let normal = NormalDistribution(mean: 0, standardDeviation: 1)
 let p = normal.cdf(1.96)
 ```
 
-### Phase 3: Statistical Tests
+### Phase 3: Hypothesis Testing
 
-Status: implemented for the target scalar/tensor test APIs. Future work can add
-effect sizes, alternative hypotheses, and exact small-sample methods where
-useful.
+Status: implemented for the target scalar/tensor test APIs with a dedicated
+`Numerica.Statistics.HypothesisTesting` namespace, alternative hypotheses,
+degrees-of-freedom metadata, effect sizes where available, and typed result
+objects. Future work can add exact small-sample methods where useful.
 
 Statistical tests should return strongly typed result objects rather than loose
 tuples or dictionaries.
 
 Target tests:
 
-- `tTest`
+- `welchTTest`
 - `pairedTTest`
-- `chiSquareTest`
+- `chiSquareGoodnessOfFit`
 - `oneWayANOVA`
 - `mannWhitneyU`
+- `kolmogorovSmirnovTest`
 
 Result objects should expose:
 
+- `method`
 - `statistic`
 - `pValue`
 - `confidenceInterval`
+- `degreesOfFreedom`
+- `effectSize`
 
 Example target API:
 
 ```swift
-if let result = tTest(sampleA, sampleB) {
+if let result = HypothesisTesting.welchTTest(sampleA, sampleB) {
     print(result.pValue)
 }
 ```
@@ -260,11 +265,69 @@ let summaries = grouped?.summaries()
 let values = table?.numericColumn("value")
 ```
 
+### Phase 9: Signal Processing
+
+Status: planned.
+
+Signal processing should provide practical one-dimensional DSP operations over
+`Tensor<Double>` and lightweight value types. APIs should stay strongly typed,
+avoid hidden global state, and use Accelerate/vDSP where it provides clear
+runtime or allocation wins.
+
+Initial target APIs:
+
+- `Signal`
+- `fft`
+- `inverseFFT`
+- `convolve`
+- `correlate`
+- `autocorrelation`
+- `movingAverage`
+- `detrend`
+- `normalize`
+- `zeroCrossingRate`
+- `peakDetection`
+
+Window functions:
+
+- `rectangularWindow`
+- `hannWindow`
+- `hammingWindow`
+- `blackmanWindow`
+
+Filtering:
+
+- `lowPassFilter`
+- `highPassFilter`
+- `bandPassFilter`
+- `bandStopFilter`
+- Biquad/IIR filter helpers
+
+Spectral analysis:
+
+- `periodogram`
+- Power spectral density helpers
+- Magnitude and phase spectrum helpers
+
+Future work can add resampling, interpolation, overlap-add convolution,
+short-time Fourier transforms, spectrograms, and multichannel signal helpers.
+
+Example target API:
+
+```swift
+let signal = Signal(samples: waveform, sampleRate: 44_100)
+let spectrum = signal.fft()
+let smoothed = signal.movingAverage(windowSize: 9)
+let peaks = signal.peaks()
+```
+
 ## Backend Strategy
 
 - Keep PureSwift implementations as the correctness baseline.
 - Use Accelerate for vectorized statistics, linear algebra, and batch
   probability operations where it reduces runtime or allocations.
+- Use Accelerate/vDSP for FFT, convolution, correlation, windowing, and
+  filtering when it improves performance without leaking backend details.
 - Prefer SIMD for small fixed-width operations when it improves clarity and
   performance.
 - Keep MLX interoperability in `Adapters/SwiftNumericaMLX` so users can convert
@@ -277,4 +340,5 @@ let values = table?.numericColumn("value")
 ## Success Criterion
 
 SwiftNumerica should become the default Swift package for statistics,
-probability, optimization, and scientific computing on Apple Silicon.
+probability, optimization, signal processing, and scientific computing on Apple
+Silicon.
