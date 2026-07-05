@@ -114,4 +114,104 @@ struct BackendSelectionTests {
         #expect(accelerateRegression.intercept.isApproximatelyEqual(to: pureRegression.intercept))
         #expect(accelerateRegression.rSquared.isApproximatelyEqual(to: pureRegression.rSquared))
     }
+
+    @Test func pureSwiftAndAccelerateOrderStatisticsAreEquivalent() throws {
+        let evenTensor = Tensor.vector([9, 2, 7, 4, 5, 4, 4, 2])
+        let oddTensor = Tensor.vector([3, 1, 4, 1, 5, 9, 2])
+
+        Numerica.configuration.backend = .pureSwift
+        let pureEvenMedian = try #require(Numerica.Statistics.median(evenTensor))
+        let pureOddMedian = try #require(Numerica.Statistics.median(oddTensor))
+        let pureQuantile = try #require(Numerica.Statistics.quantile(evenTensor, probability: 0.35))
+        let purePercentile = try #require(Numerica.Statistics.percentile(evenTensor, percentile: 90))
+        let pureInterquartileRange = try #require(Numerica.Statistics.interquartileRange(evenTensor))
+
+        Numerica.configuration.backend = .accelerate
+        let accelerateEvenMedian = try #require(Numerica.Statistics.median(evenTensor))
+        let accelerateOddMedian = try #require(Numerica.Statistics.median(oddTensor))
+        let accelerateQuantile = try #require(Numerica.Statistics.quantile(evenTensor, probability: 0.35))
+        let acceleratePercentile = try #require(Numerica.Statistics.percentile(evenTensor, percentile: 90))
+        let accelerateInterquartileRange = try #require(
+            Numerica.Statistics.interquartileRange(evenTensor))
+
+        #expect(accelerateEvenMedian.isApproximatelyEqual(to: pureEvenMedian))
+        #expect(accelerateOddMedian.isApproximatelyEqual(to: pureOddMedian))
+        #expect(accelerateQuantile.isApproximatelyEqual(to: pureQuantile))
+        #expect(acceleratePercentile.isApproximatelyEqual(to: purePercentile))
+        #expect(accelerateInterquartileRange.isApproximatelyEqual(to: pureInterquartileRange))
+    }
+
+    @Test func pureSwiftAndAccelerateSpearmanCorrelationIsEquivalent() throws {
+        let x = Tensor.vector([1, 2, 2, 3, 5, 8, 8, 13])
+        let y = Tensor.vector([2, 1, 4, 3, 7, 12, 11, 20])
+
+        Numerica.configuration.backend = .pureSwift
+        let pureSpearman = try #require(Numerica.Statistics.spearmanCorrelation(x, y))
+
+        Numerica.configuration.backend = .accelerate
+        let accelerateSpearman = try #require(Numerica.Statistics.spearmanCorrelation(x, y))
+
+        #expect(accelerateSpearman.isApproximatelyEqual(to: pureSpearman))
+    }
+
+    @Test func pureSwiftAndAccelerateMultipleLinearRegressionIsEquivalent() throws {
+        let features = try #require(
+            Tensor.matrix([[1, 2], [2, 1], [3, 4], [4, 3], [5, 7], [6, 5]]))
+        let target = Tensor.vector([6, 5, 12, 11, 20, 17])
+
+        Numerica.configuration.backend = .pureSwift
+        let pureModel = try #require(
+            Numerica.Statistics.multipleLinearRegression(features: features, target: target))
+
+        Numerica.configuration.backend = .accelerate
+        let accelerateModel = try #require(
+            Numerica.Statistics.multipleLinearRegression(features: features, target: target))
+
+        #expect(accelerateModel.coefficients.count == pureModel.coefficients.count)
+        for (accelerateCoefficient, pureCoefficient) in zip(
+            accelerateModel.coefficients, pureModel.coefficients)
+        {
+            #expect(accelerateCoefficient.isApproximatelyEqual(to: pureCoefficient, tolerance: 1e-9))
+        }
+        #expect(accelerateModel.intercept.isApproximatelyEqual(to: pureModel.intercept, tolerance: 1e-9))
+        #expect(accelerateModel.rSquared.isApproximatelyEqual(to: pureModel.rSquared, tolerance: 1e-9))
+    }
+
+    @Test func pureSwiftAndAccelerateLogisticRegressionIsEquivalent() throws {
+        let features = try #require(Tensor.matrix([[0], [1], [2], [3], [4], [5]]))
+        let target = Tensor.vector([0, 0, 0, 1, 1, 1])
+
+        Numerica.configuration.backend = .pureSwift
+        let pureModel = try #require(
+            Numerica.Statistics.logisticRegression(
+                features: features, target: target, learningRate: 0.5, iterations: 500))
+
+        Numerica.configuration.backend = .accelerate
+        let accelerateModel = try #require(
+            Numerica.Statistics.logisticRegression(
+                features: features, target: target, learningRate: 0.5, iterations: 500))
+
+        #expect(accelerateModel.coefficients.count == pureModel.coefficients.count)
+        for (accelerateCoefficient, pureCoefficient) in zip(
+            accelerateModel.coefficients, pureModel.coefficients)
+        {
+            #expect(accelerateCoefficient.isApproximatelyEqual(to: pureCoefficient, tolerance: 1e-9))
+        }
+        #expect(accelerateModel.intercept.isApproximatelyEqual(to: pureModel.intercept, tolerance: 1e-9))
+    }
+
+    @Test func accelerateVarianceIsNumericallyStableForLargeOffsets() throws {
+        let offset = 100_000_000.0
+        let tensor = Tensor.vector([2, 4, 4, 4, 5, 5, 7, 9].map { $0 + offset })
+
+        Numerica.configuration.backend = .pureSwift
+        let pureVariance = try #require(Numerica.Statistics.populationVariance(tensor))
+
+        Numerica.configuration.backend = .accelerate
+        let accelerateVariance = try #require(Numerica.Statistics.populationVariance(tensor))
+
+        #expect(pureVariance.isApproximatelyEqual(to: 4, tolerance: 1e-6))
+        #expect(accelerateVariance.isApproximatelyEqual(to: 4, tolerance: 1e-6))
+        #expect(accelerateVariance.isApproximatelyEqual(to: pureVariance, tolerance: 1e-6))
+    }
 }

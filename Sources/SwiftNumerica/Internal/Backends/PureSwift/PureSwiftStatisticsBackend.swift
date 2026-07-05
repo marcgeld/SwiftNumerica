@@ -175,7 +175,7 @@ internal struct PureSwiftStatisticsBackend: StatisticsBackend {
         let transposed = transpose(design)
         let normalMatrix = multiply(transposed, design)
         let normalTarget = multiply(transposed, target.values)
-        guard let beta = solveLinearSystem(normalMatrix, normalTarget) else { return nil }
+        guard let beta = LinearSystemMath.solve(normalMatrix, normalTarget) else { return nil }
 
         let predictions = design.map { row in dot(row, beta) }
         let targetMean = target.values.reduce(0, +) / Double(target.count)
@@ -318,38 +318,4 @@ internal struct PureSwiftStatisticsBackend: StatisticsBackend {
         return z / (1 + z)
     }
 
-    private func solveLinearSystem(_ matrix: [[Double]], _ vector: [Double]) -> [Double]? {
-        let count = vector.count
-        guard matrix.count == count,
-              matrix.allSatisfy({ $0.count == count }) else { return nil }
-
-        var augmented = (0..<count).map { row in
-            matrix[row] + [vector[row]]
-        }
-
-        for pivotIndex in 0..<count {
-            var pivotRow = pivotIndex
-            for row in pivotIndex..<count where abs(augmented[row][pivotIndex]) > abs(augmented[pivotRow][pivotIndex]) {
-                pivotRow = row
-            }
-            guard abs(augmented[pivotRow][pivotIndex]) > 1e-12 else { return nil }
-            if pivotRow != pivotIndex {
-                augmented.swapAt(pivotRow, pivotIndex)
-            }
-
-            let pivot = augmented[pivotIndex][pivotIndex]
-            for column in pivotIndex...count {
-                augmented[pivotIndex][column] /= pivot
-            }
-
-            for row in 0..<count where row != pivotIndex {
-                let factor = augmented[row][pivotIndex]
-                for column in pivotIndex...count {
-                    augmented[row][column] -= factor * augmented[pivotIndex][column]
-                }
-            }
-        }
-
-        return augmented.map { $0[count] }
-    }
 }

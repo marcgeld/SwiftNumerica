@@ -69,6 +69,9 @@ internal struct AccelerateStatisticsBackend: StatisticsBackend {
         #endif
     }
 
+    // Sort-dominated statistics (median, quantiles, Spearman ranks) delegate
+    // to the reference implementation: vDSP_vsortD benchmarks slower than
+    // Swift's standard sort, so Accelerate offers no win for these.
     internal func median(_ tensor: Tensor<Double>) -> Double? { reference.median(tensor) }
     internal func mode(_ tensor: Tensor<Double>) -> [Double] { reference.mode(tensor) }
 
@@ -91,19 +94,17 @@ internal struct AccelerateStatisticsBackend: StatisticsBackend {
     }
 
     internal func populationVariance(_ tensor: Tensor<Double>) -> Double? {
-        guard !tensor.values.isEmpty else {
+        guard !tensor.values.isEmpty,
+              let mean = mean(tensor) else {
             return nil
         }
 
         #if canImport(Accelerate)
-        guard let mean = mean(tensor) else {
-            return nil
-        }
-        var meanSquare = 0.0
-        tensor.values.withUnsafeBufferPointer { buffer in
-            vDSP_measqvD(buffer.baseAddress!, 1, &meanSquare, vDSP_Length(buffer.count))
-        }
-        return Swift.max(0, meanSquare - mean * mean)
+        // Two-pass centered sum of squares matches the PureSwift reference and
+        // avoids the catastrophic cancellation of the E[x^2] - mean^2 form for
+        // data with a large mean relative to its spread.
+        let centered = centeredValues(tensor.values, mean: mean)
+        return sumOfSquares(centered) / Double(tensor.count)
         #else
         return accelerateUnavailable()
         #endif
@@ -243,12 +244,106 @@ internal struct AccelerateStatisticsBackend: StatisticsBackend {
 
     internal func multipleLinearRegression(features: Tensor<Double>, target: Tensor<Double>)
         -> Numerica.Statistics.MultipleLinearRegressionResult?
-    { reference.multipleLinearRegression(features: features, target: target) }
+    {
+        guard let dimensions = matrixDimensions(features),
+              target.count == dimensions.rows,
+              dimensions.rows > dimensions.columns else { return nil }
+
+        #if canImport(Accelerate)
+        let rows = dimensions.rows
+        let columns = dimensions.columns + 1
+        let design = designMatrix(from: features, rows: rows, columns: dimensions.columns)
+        let transposed = transposedMatrix(design, rows: rows, columns: columns)
+        let normalMatrix = matrixProduct(
+            transposed, rows: columns, columns: rows,
+            design, columns: columns
+        )
+        let normalTarget = matrixProduct(
+            transposed, rows: columns, columns: rows,
+            target.values, columns: 1
+        )
+        let normalRows = (0..<columns).map { row in
+            Array(normalMatrix[(row * columns)..<((row + 1) * columns)])
+        }
+        guard let beta = LinearSystemMath.solve(normalRows, normalTarget) else { return nil }
+
+        let predictions = matrixProduct(design, rows: rows, columns: columns, beta, columns: 1)
+        var residuals = [Double](repeating: 0, count: rows)
+        predictions.withUnsafeBufferPointer { predictionBuffer in
+            target.values.withUnsafeBufferPointer { targetBuffer in
+                residuals.withUnsafeMutableBufferPointer { residualBuffer in
+                    vDSP_vsubD(
+                        predictionBuffer.baseAddress!, 1,
+                        targetBuffer.baseAddress!, 1,
+                        residualBuffer.baseAddress!, 1,
+                        vDSP_Length(rows)
+                    )
+                }
+            }
+        }
+        let residualSumSquares = sumOfSquares(residuals)
+        guard let targetMean = mean(target) else { return nil }
+        let totalSumSquares = sumOfSquares(centeredValues(target.values, mean: targetMean))
+        let rSquared = totalSumSquares == 0 ? 1 : 1 - residualSumSquares / totalSumSquares
+
+        return .init(
+            coefficients: Array(beta.dropFirst()),
+            intercept: beta[0],
+            rSquared: rSquared
+        )
+        #else
+        return accelerateUnavailable()
+        #endif
+    }
+
     internal func logisticRegression(
         features: Tensor<Double>, target: Tensor<Double>, learningRate: Double, iterations: Int
     ) -> Numerica.Statistics.LogisticRegressionResult? {
-        reference.logisticRegression(
-            features: features, target: target, learningRate: learningRate, iterations: iterations)
+        guard let dimensions = matrixDimensions(features),
+              target.count == dimensions.rows,
+              learningRate > 0,
+              iterations > 0,
+              target.values.allSatisfy({ $0 == 0 || $0 == 1 }) else { return nil }
+
+        #if canImport(Accelerate)
+        let rows = dimensions.rows
+        let columns = dimensions.columns + 1
+        let design = designMatrix(from: features, rows: rows, columns: dimensions.columns)
+        let transposed = transposedMatrix(design, rows: rows, columns: columns)
+        var weights = [Double](repeating: 0, count: columns)
+        let stepScale = learningRate / Double(rows)
+
+        for _ in 0..<iterations {
+            let scores = matrixProduct(design, rows: rows, columns: columns, weights, columns: 1)
+            let predictions = sigmoidValues(scores)
+            var errors = [Double](repeating: 0, count: rows)
+            target.values.withUnsafeBufferPointer { targetBuffer in
+                predictions.withUnsafeBufferPointer { predictionBuffer in
+                    errors.withUnsafeMutableBufferPointer { errorBuffer in
+                        vDSP_vsubD(
+                            targetBuffer.baseAddress!, 1,
+                            predictionBuffer.baseAddress!, 1,
+                            errorBuffer.baseAddress!, 1,
+                            vDSP_Length(rows)
+                        )
+                    }
+                }
+            }
+            let gradients = matrixProduct(transposed, rows: columns, columns: rows, errors, columns: 1)
+            for weightIndex in weights.indices {
+                weights[weightIndex] -= stepScale * gradients[weightIndex]
+            }
+        }
+
+        return .init(
+            coefficients: Array(weights.dropFirst()),
+            intercept: weights[0],
+            iterations: iterations,
+            learningRate: learningRate
+        )
+        #else
+        return accelerateUnavailable()
+        #endif
     }
 
     private func accelerateUnavailable<T>() -> T {
@@ -329,6 +424,80 @@ internal struct AccelerateStatisticsBackend: StatisticsBackend {
         values.withUnsafeBufferPointer { buffer in
             vDSP_svesqD(buffer.baseAddress!, 1, &result, vDSP_Length(buffer.count))
         }
+        return result
+    }
+
+    private func matrixDimensions(_ tensor: Tensor<Double>) -> (rows: Int, columns: Int)? {
+        guard tensor.rank == 2, tensor.shape.dimensions.count == 2 else { return nil }
+        return (tensor.shape.dimensions[0], tensor.shape.dimensions[1])
+    }
+
+    /// Builds a row-major design matrix with a leading intercept column of ones.
+    private func designMatrix(from tensor: Tensor<Double>, rows: Int, columns: Int) -> [Double] {
+        var design = [Double](repeating: 1, count: rows * (columns + 1))
+        for row in 0..<rows {
+            for column in 0..<columns {
+                design[row * (columns + 1) + column + 1] = tensor.values[row * columns + column]
+            }
+        }
+        return design
+    }
+
+    private func transposedMatrix(_ matrix: [Double], rows: Int, columns: Int) -> [Double] {
+        var result = [Double](repeating: 0, count: matrix.count)
+        matrix.withUnsafeBufferPointer { source in
+            result.withUnsafeMutableBufferPointer { destination in
+                vDSP_mtransD(
+                    source.baseAddress!, 1,
+                    destination.baseAddress!, 1,
+                    vDSP_Length(columns),
+                    vDSP_Length(rows)
+                )
+            }
+        }
+        return result
+    }
+
+    /// Multiplies row-major `left` (`rows` x `columns`) by row-major `right`
+    /// (`columns` x `rightColumns`).
+    private func matrixProduct(
+        _ left: [Double], rows: Int, columns: Int,
+        _ right: [Double], columns rightColumns: Int
+    ) -> [Double] {
+        var result = [Double](repeating: 0, count: rows * rightColumns)
+        left.withUnsafeBufferPointer { leftBuffer in
+            right.withUnsafeBufferPointer { rightBuffer in
+                result.withUnsafeMutableBufferPointer { resultBuffer in
+                    vDSP_mmulD(
+                        leftBuffer.baseAddress!, 1,
+                        rightBuffer.baseAddress!, 1,
+                        resultBuffer.baseAddress!, 1,
+                        vDSP_Length(rows),
+                        vDSP_Length(rightColumns),
+                        vDSP_Length(columns)
+                    )
+                }
+            }
+        }
+        return result
+    }
+
+    /// Computes `1 / (1 + exp(-x))` elementwise. The direct form is IEEE-safe:
+    /// `exp` saturation yields exactly `0` and `1` at the extremes.
+    private func sigmoidValues(_ values: [Double]) -> [Double] {
+        let count = values.count
+        var negated = [Double](repeating: 0, count: count)
+        values.withUnsafeBufferPointer { buffer in
+            vDSP_vnegD(buffer.baseAddress!, 1, &negated, 1, vDSP_Length(count))
+        }
+        var exponentials = [Double](repeating: 0, count: count)
+        var elementCount = Int32(count)
+        vvexp(&exponentials, negated, &elementCount)
+        var one = 1.0
+        var denominators = [Double](repeating: 0, count: count)
+        vDSP_vsaddD(exponentials, 1, &one, &denominators, 1, vDSP_Length(count))
+        var result = [Double](repeating: 0, count: count)
+        vDSP_svdivD(&one, denominators, 1, &result, 1, vDSP_Length(count))
         return result
     }
     #endif
