@@ -401,6 +401,66 @@ Future work should keep `Examples/COVERAGE.md` and
 `Examples/EXPECTED_OUTPUT.md` current whenever public symbols or example output
 change.
 
+### Phase 11: Sparse Matrices
+
+Status: planned.
+
+Sparse matrices should fill the same role that
+[`scipy.sparse`](https://docs.scipy.org/doc/scipy/reference/sparse.html) fills
+in SciPy: storage and solvers for systems that are too large for dense
+representations because most entries are zero. Dense operations scale as
+O(n^2) in memory and O(n^3) in factorization time, so sparse storage is the
+only practical option well before matrices reach the tens of thousands of rows
+common in PDE discretizations, graph problems, splines, and large
+least-squares models.
+
+A sparse matrix is a new storage class, not a `Tensor<Double>`, so this phase
+adds a dedicated `SparseMatrix` value type with explicit conversions to and
+from the dense `Matrix` type. The tensor-first numerical core is unchanged.
+
+The backend split follows the existing contract with one deliberate nuance:
+the PureSwift reference implements iterative solvers (conjugate gradient for
+symmetric positive definite systems), while the Accelerate backend uses the
+Sparse Solvers library
+([direct QR/Cholesky/LDLT factorizations and `SparseSolve`](https://developer.apple.com/documentation/accelerate/sparse-solvers-library)),
+which is a supported modern interface and needs no C shim. Direct and
+iterative methods agree within tolerance on well-conditioned systems;
+equivalence tests must account for that rather than expect bitwise-close
+results.
+
+Initial target APIs, mirroring the most-used parts of `scipy.sparse`:
+
+- `SparseMatrix` built from coordinate-format triplets (`scipy.sparse.coo_matrix`)
+  with validated dimensions and duplicate handling
+- Compressed sparse row/column storage (`scipy.sparse.csr_matrix` /
+  `scipy.sparse.csc_matrix`)
+- Sparse matrix-vector and matrix-dense products
+- `solve` for symmetric positive definite systems
+  (`scipy.sparse.linalg.spsolve` / `scipy.sparse.linalg.cg`)
+- Conversions to and from dense `Matrix` (`toarray` / `csr_array`)
+
+Future work can add general nonsymmetric solvers (GMRES/BiCGSTAB), sparse
+least squares (`scipy.sparse.linalg.lsqr` / LSMR), sparse eigenvalue routines
+(`scipy.sparse.linalg.eigs`), and element-wise sparse arithmetic.
+
+Example target API:
+
+```swift
+let laplacian = SparseMatrix(
+    rows: 4,
+    columns: 4,
+    entries: [
+        (0, 0, 2), (0, 1, -1),
+        (1, 0, -1), (1, 1, 2), (1, 2, -1),
+        (2, 1, -1), (2, 2, 2), (2, 3, -1),
+        (3, 2, -1), (3, 3, 2),
+    ]
+)
+
+let solution = laplacian?.solve(Vector([1, 0, 0, 1]))
+let dense = laplacian?.denseMatrix()
+```
+
 ## Backend Strategy
 
 - Keep PureSwift implementations as the correctness baseline.

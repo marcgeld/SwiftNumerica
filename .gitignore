@@ -94,3 +94,7 @@ Temporary Items
 .swiftpm/
 .build/
 Packages/
+
+# Adapter packages resolve their own external dependencies during local builds.
+# They are release-tested by CI, but the core library does not commit lockfiles.
+Adapters/*/Package.resolved

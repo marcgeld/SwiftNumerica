@@ -6,7 +6,12 @@ SwiftNumerica is a modern numerical computing, statistics, probability, and data
 
 The fundamental abstraction is `Tensor<Double>`. Numerical code must operate on tensors, not CSV files, TSV files, JSON tables, SQL tables, or DataFrames. Tabular systems belong in clearly separated adapters or integration modules, and the numerical core must remain independent of them.
 
-The initial implementation is pure Swift and targets Apple Silicon first. Future backends may use Accelerate, SIMD, Metal, BLAS, or LAPACK without changing public APIs. MLX interoperability lives in an optional adapter package so the core library does not depend on MLX.
+The correctness baseline is PureSwift, and accelerated backends already use
+Accelerate, vDSP, BLAS, and LAPACK where they provide clear value on Apple
+platforms. Public APIs stay backend-independent so future SIMD, Metal, or other
+hardware-specific implementations can be added without changing user code. MLX
+interoperability lives in an optional adapter package so the core library does
+not depend on MLX.
 
 ## Tensor-First Architecture
 
@@ -70,6 +75,14 @@ Examples/
 └── Standalone executable example package
 ```
 
+## Requirements
+
+- Core package: Swift tools 6.2 or newer.
+- Optional MLX adapter: Swift tools 6.3 or newer, plus MLX Swift's platform and
+  runtime requirements.
+- Supported Apple platforms are declared in `Package.swift`: macOS 14, iOS 17,
+  tvOS 17, watchOS 10, and visionOS 1 or newer.
+
 ## Backend Architecture
 
 Public APIs call internal backend protocols through `BackendResolver`. Public APIs must never instantiate backend implementations directly and must never expose backend implementation details.
@@ -114,7 +127,11 @@ A C target avoids all of this: `cSettings: [.define(...)]` is a safe setting tha
 
 ## Optional MLX Adapter
 
-The core `SwiftNumerica` package intentionally has no MLX dependency. MLX interoperability lives in a separate package at [Adapters/SwiftNumericaMLX](Adapters/SwiftNumericaMLX), which can be built independently and imported only by projects that need MLX arrays.
+The core `SwiftNumerica` package intentionally has no MLX dependency. MLX
+interoperability lives in a separate package at
+[Adapters/SwiftNumericaMLX](Adapters/SwiftNumericaMLX), which is built and
+release-verified by CI for the same release tag and imported only by projects
+that need MLX arrays.
 
 ```swift
 import SwiftNumerica
@@ -339,7 +356,7 @@ import PackageDescription
 let package = Package(
     name: "ExampleProject",
     dependencies: [
-        .package(url: "https://github.com/<owner>/SwiftNumerica.git", from: "0.0.1")
+        .package(url: "https://github.com/marcgeld/SwiftNumerica.git", from: "0.1.0")
     ],
     targets: [
         .target(
@@ -354,6 +371,13 @@ let package = Package(
 ```
 
 The CI workflow validates this packaging contract by creating a separate consumer package, importing `SwiftNumerica`, and running a small executable.
+
+The optional MLX adapter is intentionally not exposed as a root package product,
+because that would make MLX part of the core package dependency graph. To use
+the adapter from this repository, add the adapter package by path from a checkout
+of the matching release tag. See
+[Adapters/SwiftNumericaMLX/README.md](Adapters/SwiftNumericaMLX/README.md) for
+the adapter-specific dependency snippet and MLX runtime notes.
 
 ## Continuous Integration And Releases
 

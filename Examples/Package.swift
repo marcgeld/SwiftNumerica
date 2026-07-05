@@ -18,9 +18,9 @@ let package = Package(
         //
         // .package(url: "https://github.com/marcgeld/SwiftNumerica.git", branch: "main")
         //
-        // or use a released version when one exists:
+        // or use the 0.1.0 release after the first tag has been published:
         //
-        // .package(url: "https://github.com/marcgeld/SwiftNumerica.git", from: "1.0.0")
+        // .package(url: "https://github.com/marcgeld/SwiftNumerica.git", from: "0.1.0")
         .package(path: "..")
     ],
     targets: [
