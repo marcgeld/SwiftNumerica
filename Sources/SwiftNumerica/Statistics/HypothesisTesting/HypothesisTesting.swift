@@ -183,29 +183,43 @@ public extension Numerica.Statistics {
             )
         }
 
-        /// Performs a chi-square goodness-of-fit test.
+        /// Performs a chi-square goodness-of-fit test, matching
+        /// `scipy.stats.chisquare` semantics.
         ///
         /// When `expected` is omitted, the observed total is distributed uniformly
-        /// across all categories.
+        /// across all categories. When `expected` is provided, its total must
+        /// agree with the observed total within SciPy's relative tolerance of
+        /// `sqrt(ulp)` (about `1.49e-8`), because the test statistic is only
+        /// chi-square distributed when the totals match.
         ///
         /// - Parameters:
         ///   - observed: Observed category counts.
         ///   - expected: Expected category counts.
+        ///   - ddof: Delta degrees of freedom: the p-value uses
+        ///     `count - 1 - ddof` degrees of freedom, matching SciPy's `ddof`.
         /// - Returns: The test result, or `nil` when the test is undefined.
         public static func chiSquareGoodnessOfFit(
             observed: Tensor<Double>,
-            expected: Tensor<Double>? = nil
+            expected: Tensor<Double>? = nil,
+            ddof: Int = 0
         ) -> HypothesisTestResult? {
             guard observed.count > 1,
-                  observed.values.allSatisfy({ $0 >= 0 }) else { return nil }
+                  observed.values.allSatisfy({ $0 >= 0 }),
+                  ddof >= 0,
+                  ddof < observed.count - 1 else { return nil }
 
+            let total = observed.values.reduce(0, +)
             let expectedValues: [Double]
             if let expected {
                 guard expected.count == observed.count,
                       expected.values.allSatisfy({ $0 > 0 }) else { return nil }
+
+                let expectedTotal = expected.values.reduce(0, +)
+                let relativeTolerance = Double.ulpOfOne.squareRoot()
+                let scale = Swift.max(Swift.abs(total), Swift.abs(expectedTotal))
+                guard Swift.abs(total - expectedTotal) <= relativeTolerance * scale else { return nil }
                 expectedValues = expected.values
             } else {
-                let total = observed.values.reduce(0, +)
                 guard total > 0 else { return nil }
                 expectedValues = Array(repeating: total / Double(observed.count), count: observed.count)
             }
@@ -214,8 +228,7 @@ public extension Numerica.Statistics {
                 let difference = pair.0 - pair.1
                 return partialResult + difference * difference / pair.1
             }
-            let degreesOfFreedom = Double(observed.count - 1)
-            let total = observed.values.reduce(0, +)
+            let degreesOfFreedom = Double(observed.count - 1 - ddof)
 
             return .init(
                 method: "Chi-square goodness-of-fit test",

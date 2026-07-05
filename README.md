@@ -95,7 +95,7 @@ let accelerated = Numerica.Statistics.mean(Tensor.vector([1, 2, 3]))
 Numerica.configuration.backend = .automatic
 ```
 
-Runtime switching exists so future benchmark and validation modules can run identical tensors through PureSwift, Accelerate, and other core backends. Accelerated backends must produce numerically equivalent results to PureSwift within documented tolerances. Backend-specific optimizations belong behind internal backend protocols such as `StatisticsBackend`, `TensorBackend`, `LinearAlgebraBackend`, and `ProbabilityBackend`.
+Runtime switching exists so future benchmark and validation modules can run identical tensors through PureSwift, Accelerate, and other core backends. Accelerated backends must produce numerically equivalent results to PureSwift within documented tolerances. Backend-specific optimizations belong behind internal backend protocols such as `StatisticsBackend`, `TensorBackend`, `LinearAlgebraBackend`, `SignalProcessingBackend`, and `ProbabilityBackend`.
 
 ## Optional MLX Adapter
 

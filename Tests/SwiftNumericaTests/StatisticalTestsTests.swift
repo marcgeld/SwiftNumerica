@@ -64,6 +64,45 @@ import Testing
     #expect(result.effectSize?.isApproximatelyEqual(to: (15.0 / 30.0).squareRoot()) == true)
 }
 
+@Test func chiSquareTestMatchesSciPyReferenceValues() throws {
+    // scipy.stats.chisquare([16, 18, 16, 14, 12, 12], f_exp=[16, 16, 16, 16, 16, 8])
+    // returns (3.5, 0.62338762774958223).
+    let withExpected = try #require(
+        HypothesisTesting.chiSquareGoodnessOfFit(
+            observed: .vector([16, 18, 16, 14, 12, 12]),
+            expected: .vector([16, 16, 16, 16, 16, 8])
+        ))
+    #expect(withExpected.statistic.isApproximatelyEqual(to: 3.5))
+    #expect(withExpected.pValue.isApproximatelyEqual(to: 0.62338762774958223, tolerance: 1e-8))
+    #expect(withExpected.degreesOfFreedom?.isApproximatelyEqual(to: 5) == true)
+
+    // scipy.stats.chisquare([16, 18, 16, 14, 12, 12], ddof=1)
+    // returns (2.0, 0.7357588823428847).
+    let withDdof = try #require(
+        HypothesisTesting.chiSquareGoodnessOfFit(
+            observed: .vector([16, 18, 16, 14, 12, 12]),
+            ddof: 1
+        ))
+    #expect(withDdof.statistic.isApproximatelyEqual(to: 2))
+    #expect(withDdof.pValue.isApproximatelyEqual(to: 0.7357588823428847, tolerance: 1e-8))
+    #expect(withDdof.degreesOfFreedom?.isApproximatelyEqual(to: 4) == true)
+}
+
+@Test func chiSquareTestRejectsInvalidSciPyStyleInputs() {
+    // Totals that disagree beyond SciPy's relative tolerance are rejected.
+    #expect(
+        HypothesisTesting.chiSquareGoodnessOfFit(
+            observed: .vector([20, 5, 5]),
+            expected: .vector([10, 10, 11])
+        ) == nil)
+
+    // ddof must leave at least one degree of freedom.
+    #expect(
+        HypothesisTesting.chiSquareGoodnessOfFit(observed: .vector([10, 20, 30]), ddof: 2) == nil)
+    #expect(
+        HypothesisTesting.chiSquareGoodnessOfFit(observed: .vector([10, 20, 30]), ddof: -1) == nil)
+}
+
 @Test func chiSquareTestReturnsOneForPerfectUniformFit() throws {
     let result = try #require(
         HypothesisTesting.chiSquareGoodnessOfFit(observed: .vector([10, 10, 10]))

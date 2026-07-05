@@ -145,42 +145,18 @@ public extension Numerica.SignalProcessing {
         }
     }
 
-    /// Computes the discrete Fourier transform.
+    /// Computes the discrete Fourier transform in O(n log n) for any length.
     static func fft(_ signal: Tensor<Double>) -> Tensor<ComplexNumber>? {
-        guard isFiniteVector(signal), signal.count > 0 else { return nil }
-
-        let count = signal.count
-        let scale = -2 * Double.pi / Double(count)
-        let spectrum = (0..<count).map { frequency -> ComplexNumber in
-            var real = 0.0
-            var imaginary = 0.0
-            for (sampleIndex, sample) in signal.values.enumerated() {
-                let angle = scale * Double(frequency * sampleIndex)
-                real += sample * Foundation.cos(angle)
-                imaginary += sample * Foundation.sin(angle)
-            }
-            return ComplexNumber(real: real, imaginary: imaginary)
-        }
-
-        return complexVector(spectrum)
+        guard isFiniteVector(signal), signal.count > 0,
+              let backend = try? BackendResolver.signalProcessingBackend() else { return nil }
+        return complexVector(backend.fft(signal.values))
     }
 
     /// Computes the inverse discrete Fourier transform and returns the real component.
     static func inverseFFT(_ spectrum: Tensor<ComplexNumber>) -> Tensor<Double>? {
-        guard spectrum.rank == 1, spectrum.count > 0 else { return nil }
-
-        let count = spectrum.count
-        let scale = 2 * Double.pi / Double(count)
-        let values = (0..<count).map { sampleIndex -> Double in
-            var real = 0.0
-            for (frequency, value) in spectrum.values.enumerated() {
-                let angle = scale * Double(frequency * sampleIndex)
-                real += value.real * Foundation.cos(angle) - value.imaginary * Foundation.sin(angle)
-            }
-            return real / Double(count)
-        }
-
-        return .vector(values)
+        guard spectrum.rank == 1, spectrum.count > 0,
+              let backend = try? BackendResolver.signalProcessingBackend() else { return nil }
+        return .vector(backend.inverseFFT(spectrum.values))
     }
 
     /// Computes the full discrete convolution of two signals.
@@ -279,19 +255,22 @@ public extension Numerica.SignalProcessing {
     }
 
     /// Computes the zero crossing rate.
+    ///
+    /// A crossing is counted whenever the sign changes between consecutive
+    /// nonzero samples, so paths through exact zeros such as `[1, 0, -1]`
+    /// count as one crossing. The rate is normalized by `count - 1`.
     static func zeroCrossingRate(_ signal: Tensor<Double>) -> Double? {
         guard isFiniteVector(signal), signal.count > 1 else { return nil }
 
         var crossings = 0
-        for index in 1..<signal.count {
-            let previous = signal.values[index - 1]
-            let current = signal.values[index]
-            if previous == 0 || current == 0 {
-                continue
-            }
-            if (previous < 0 && current > 0) || (previous > 0 && current < 0) {
+        var previousSign = 0.0
+        for value in signal.values {
+            let sign: Double = value > 0 ? 1 : (value < 0 ? -1 : 0)
+            guard sign != 0 else { continue }
+            if previousSign != 0, sign != previousSign {
                 crossings += 1
             }
+            previousSign = sign
         }
 
         return Double(crossings) / Double(signal.count - 1)

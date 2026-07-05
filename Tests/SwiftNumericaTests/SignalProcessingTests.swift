@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import SwiftNumerica
@@ -72,6 +73,14 @@ import Testing
 @Test func zeroCrossingRateAndPeakDetectionSummarizeSignalShape() throws {
     let crossings = try #require(Numerica.SignalProcessing.zeroCrossingRate(Tensor.vector([-1, 1, -1, 1])))
     #expect(crossings.isApproximatelyEqual(to: 1))
+
+    // A path through an exact zero counts as one crossing.
+    let throughZero = try #require(Numerica.SignalProcessing.zeroCrossingRate(Tensor.vector([1, 0, -1])))
+    #expect(throughZero.isApproximatelyEqual(to: 0.5))
+
+    // Leading zeros carry no sign, so no crossing is recorded.
+    let leadingZeros = try #require(Numerica.SignalProcessing.zeroCrossingRate(Tensor.vector([0, 0, 1])))
+    #expect(leadingZeros.isApproximatelyEqual(to: 0))
 
     let peaks = Numerica.SignalProcessing.peakDetection(
         Tensor.vector([0, 2, 1, 3, 0]),
@@ -152,4 +161,64 @@ import Testing
     let output = try #require(filter.applied(to: Tensor.vector([1, 2, 3])))
 
     #expect(output.values == [1, 2, 3])
+}
+
+private struct SplitMix64 {
+    var state: UInt64
+
+    mutating func nextUnit() -> Double {
+        state &+= 0x9E3779B97F4A7C15
+        var z = state
+        z = (z ^ (z >> 30)) &* 0xBF58476D1CE4E5B9
+        z = (z ^ (z >> 27)) &* 0x94D049BB133111EB
+        z ^= z >> 31
+        return Double(z >> 11) / Double(1 << 53) * 2 - 1
+    }
+}
+
+private func naiveDFT(_ values: [Double]) -> [(real: Double, imaginary: Double)] {
+    let count = values.count
+    return (0..<count).map { frequency in
+        var real = 0.0
+        var imaginary = 0.0
+        for (sampleIndex, sample) in values.enumerated() {
+            let angle = -2 * Double.pi * Double(frequency * sampleIndex) / Double(count)
+            real += sample * Foundation.cos(angle)
+            imaginary += sample * Foundation.sin(angle)
+        }
+        return (real, imaginary)
+    }
+}
+
+@Test func fftMatchesNaiveDFTAcrossLengths() throws {
+    var generator = SplitMix64(state: 0x5EED)
+
+    for count in [1, 2, 3, 4, 5, 7, 8, 12, 16, 31, 97, 128] {
+        let values = (0..<count).map { _ in generator.nextUnit() }
+        let spectrum = try #require(Numerica.SignalProcessing.fft(Tensor.vector(values)))
+        let expected = naiveDFT(values)
+
+        for frequency in 0..<count {
+            #expect(
+                spectrum.values[frequency].real
+                    .isApproximatelyEqual(to: expected[frequency].real, tolerance: 1e-9))
+            #expect(
+                spectrum.values[frequency].imaginary
+                    .isApproximatelyEqual(to: expected[frequency].imaginary, tolerance: 1e-9))
+        }
+    }
+}
+
+@Test func fftAndInverseFFTRoundTripAcrossLengths() throws {
+    var generator = SplitMix64(state: 0xF00D)
+
+    for count in [1, 3, 4, 7, 12, 45, 64, 100] {
+        let values = (0..<count).map { _ in generator.nextUnit() }
+        let spectrum = try #require(Numerica.SignalProcessing.fft(Tensor.vector(values)))
+        let reconstructed = try #require(Numerica.SignalProcessing.inverseFFT(spectrum))
+
+        for index in 0..<count {
+            #expect(reconstructed.values[index].isApproximatelyEqual(to: values[index], tolerance: 1e-9))
+        }
+    }
 }

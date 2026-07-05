@@ -41,6 +41,20 @@ internal enum BackendResolver {
         }
     }
 
+    private static let pureSwiftSignalProcessing = PureSwiftSignalProcessingBackend()
+    private static let accelerateSignalProcessing = AccelerateSignalProcessingBackend()
+
+    internal static func signalProcessingBackend() throws -> any SignalProcessingBackend {
+        switch try resolvedBackend() {
+        case .pureSwift:
+            pureSwiftSignalProcessing
+        case .accelerate:
+            accelerateSignalProcessing
+        case .automatic:
+            pureSwiftSignalProcessing
+        }
+    }
+
     internal static func resolvedBackend() throws -> ComputeBackend {
         switch Numerica.configuration.backend {
         case .automatic:

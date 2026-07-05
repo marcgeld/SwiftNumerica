@@ -200,6 +200,37 @@ struct BackendSelectionTests {
         #expect(accelerateModel.intercept.isApproximatelyEqual(to: pureModel.intercept, tolerance: 1e-9))
     }
 
+    @Test func pureSwiftAndAccelerateFFTAreEquivalent() throws {
+        // 16 exercises the vDSP power-of-two path, 24 the vDSP f * 2^n path,
+        // and 12 the pure Swift fallback for unsupported vDSP lengths.
+        for count in [12, 16, 24] {
+            let values = (0..<count).map { Double($0 % 5) - 2 }
+            let signal = Tensor.vector(values)
+
+            Numerica.configuration.backend = .pureSwift
+            let pureSpectrum = try #require(Numerica.SignalProcessing.fft(signal))
+            let pureRoundTrip = try #require(Numerica.SignalProcessing.inverseFFT(pureSpectrum))
+
+            Numerica.configuration.backend = .accelerate
+            let accelerateSpectrum = try #require(Numerica.SignalProcessing.fft(signal))
+            let accelerateRoundTrip = try #require(
+                Numerica.SignalProcessing.inverseFFT(accelerateSpectrum))
+
+            for index in 0..<count {
+                #expect(
+                    accelerateSpectrum.values[index].real
+                        .isApproximatelyEqual(to: pureSpectrum.values[index].real, tolerance: 1e-9))
+                #expect(
+                    accelerateSpectrum.values[index].imaginary
+                        .isApproximatelyEqual(
+                            to: pureSpectrum.values[index].imaginary, tolerance: 1e-9))
+                #expect(
+                    accelerateRoundTrip.values[index]
+                        .isApproximatelyEqual(to: pureRoundTrip.values[index], tolerance: 1e-9))
+            }
+        }
+    }
+
     @Test func accelerateVarianceIsNumericallyStableForLargeOffsets() throws {
         let offset = 100_000_000.0
         let tensor = Tensor.vector([2, 4, 4, 4, 5, 5, 7, 9].map { $0 + offset })

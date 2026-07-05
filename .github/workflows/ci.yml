@@ -81,3 +81,17 @@ jobs:
           EOF
 
           swift run
+
+      - name: Build and run examples
+        working-directory: Examples
+        run: |
+          set -euo pipefail
+
+          swift build
+
+          for directory in Sources/*/; do
+            example="$(basename "$directory")"
+            echo "::group::${example}"
+            swift run -q "$example"
+            echo "::endgroup::"
+          done

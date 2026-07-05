@@ -271,8 +271,11 @@ Status: implemented for tensor-first one-dimensional signal APIs, including
 `Signal`, FFT/IFFT, convolution, correlation, autocorrelation, moving average,
 window functions, detrending, normalization, zero-crossing rate, peak detection,
 periodogram, magnitude/phase spectra, FIR filters, and direct-form biquad
-filtering. Future work can add Accelerate/vDSP specializations behind the same
-public API where they improve runtime or allocations.
+filtering. FFT/IFFT run in O(n log n) for every length through a
+`SignalProcessingBackend` protocol: the PureSwift reference uses radix-2
+Cooley-Tukey for powers of two and Bluestein's chirp-z algorithm otherwise, and
+the Accelerate backend executes supported lengths with vDSP DFT. Future work can
+add vDSP-backed convolution and filtering behind the same public API.
 
 Signal processing should provide practical one-dimensional DSP operations over
 `Tensor<Double>` and lightweight value types. APIs should stay strongly typed,
