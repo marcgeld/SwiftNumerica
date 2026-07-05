@@ -327,6 +327,47 @@ let smoothed = signal.movingAverage(windowSize: 9)
 let peaks = signal.peaks()
 ```
 
+### Phase 10: Standalone Executable Examples
+
+Status: implemented for a first standalone examples package covering public API
+families across tensors, statistics, probability, hypothesis testing,
+regression, optimization, linear algebra, simulation, signal processing,
+data science, data profiling, combinatorics, and backend configuration.
+
+Examples live in a separate Swift package under `Examples/`. Each example is an
+executable target with its own complete `main.swift`, imports `SwiftNumerica`,
+uses deterministic input data, prints output and interpretation, and links to a
+stable educational reference such as Wikipedia when available.
+
+Implemented example targets:
+
+- `BackendConfigurationExample`
+- `CombinatoricsExample`
+- `CorrelationCovarianceExample`
+- `DataProfilingExample`
+- `DataScienceExample`
+- `DescriptiveStatisticsExample`
+- `DistributionFittingExample`
+- `HypothesisTestingExample`
+- `LinearAlgebraExample`
+- `OptimizationExample`
+- `ProbabilityDistributionsExample`
+- `RegressionExample`
+- `SignalProcessingFiltersExample`
+- `SignalProcessingTransformsExample`
+- `SimulationExample`
+- `TensorBasicsExample`
+
+Example usage:
+
+```bash
+cd Examples
+swift run SignalProcessingTransformsExample
+```
+
+Future work can split broad examples into even smaller one-function examples
+where that improves clarity.
+
 ## Backend Strategy
 
 - Keep PureSwift implementations as the correctness baseline.

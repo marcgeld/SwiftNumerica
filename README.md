@@ -210,25 +210,25 @@ let classifier = LogisticRegression(learningRate: 0.5, iterations: 2_000)?
 
 ## Standalone Examples
 
-Phase 10 will add complete, standalone executable examples for the public API.
+Phase 10 adds complete, standalone executable examples for the public API.
 These examples are separate from the short README sample above. Their purpose is
 to be copy-pasteable, runnable, and useful as both human documentation and
 machine-readable implementation guidance.
 
-Examples should live in a separate Swift package under `Examples/`:
+Examples live in a separate Swift package under `Examples/`:
 
 ```text
 Examples/
 ├── Package.swift
 ├── README.md
 └── Sources/
-    ├── MeanExample/
+    ├── DescriptiveStatisticsExample/
     │   └── main.swift
-    ├── WelchTTestExample/
+    ├── HypothesisTestingExample/
     │   └── main.swift
-    ├── NormalDistributionExample/
+    ├── ProbabilityDistributionsExample/
     │   └── main.swift
-    └── FFTExample/
+    └── SignalProcessingTransformsExample/
         └── main.swift
 ```
 
@@ -236,7 +236,7 @@ Each example target must be runnable on its own:
 
 ```bash
 cd Examples
-swift run FFTExample
+swift run SignalProcessingTransformsExample
 ```
 
 Each `main.swift` must be complete and self-contained:
@@ -341,7 +341,7 @@ See [ROADMAP.md](ROADMAP.md) for the detailed phase plan.
 
 Near-term priorities:
 
-- Implement Phase 10 standalone executable examples for public APIs.
+- Expand standalone example granularity where a public API benefits from an even smaller focused example.
 - Add Accelerate/vDSP specializations for `SignalProcessing` internals where they clearly improve runtime or allocations.
 - Broaden production polish, numerical validation, and integration ergonomics without weakening the tensor-first numerical core.
 
@@ -354,8 +354,7 @@ Near-term priorities:
 - Prefer value types, `Sendable`, composition, and protocols.
 - Add DocC comments for public APIs.
 - Add Swift Testing coverage for implemented functionality.
-- Add standalone examples for new public APIs when Phase 10 example coverage is
-  introduced.
+- Add standalone examples for new public APIs.
 - Reuse mathematical primitives instead of duplicating formulas.
 - Update this README whenever architecture, modules, or design decisions change.
 
