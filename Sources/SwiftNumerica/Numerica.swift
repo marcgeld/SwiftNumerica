@@ -93,3 +93,8 @@ public extension Numerica {
     /// Simulation routines including Monte Carlo, random walks, and Markov chains.
     enum Simulation {}
 }
+
+public extension Numerica {
+    /// Data science adapters for CSV, tabular data, summaries, and grouping.
+    enum DataScience {}
+}

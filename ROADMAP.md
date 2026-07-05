@@ -229,6 +229,11 @@ let estimate = simulation?.run {
 
 ### Phase 8: Data Science Integration
 
+Status: implemented for lightweight `DataTable` adapters, CSV import/export,
+optional `TabularData.DataFrame` bridges, statistical summaries, and group-by
+aggregations. Future work can add richer type inference, missing-value policies,
+streaming readers, and typed schema helpers.
+
 Data science integration should not weaken the tensor-first numerical core.
 Adapters may bridge between SwiftNumerica and tabular data, but algorithms
 should continue to operate on typed numerical structures.
@@ -239,6 +244,21 @@ Target integrations:
 - CSV import/export
 - Statistical summaries
 - Group-by aggregations
+
+Example target API:
+
+```swift
+let table = DataTable.importCSV("""
+group,value
+a,1
+a,3
+b,10
+""")
+
+let grouped = table?.grouped(by: "group")
+let summaries = grouped?.summaries()
+let values = table?.numericColumn("value")
+```
 
 ## Backend Strategy
 

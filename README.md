@@ -4,7 +4,7 @@ SwiftNumerica is a modern numerical computing, statistics, probability, and data
 
 ## Design Philosophy
 
-The fundamental abstraction is `Tensor<Double>`. Numerical code must operate on tensors, not CSV files, TSV files, JSON tables, SQL tables, or DataFrames. Tabular systems may be added later as adapters, but the numerical core must remain independent of them.
+The fundamental abstraction is `Tensor<Double>`. Numerical code must operate on tensors, not CSV files, TSV files, JSON tables, SQL tables, or DataFrames. Tabular systems belong in clearly separated adapters or integration modules, and the numerical core must remain independent of them.
 
 The initial implementation is pure Swift and targets Apple Silicon first. Future backends may use Accelerate, SIMD, Metal, BLAS, or LAPACK without changing public APIs. MLX interoperability lives in an optional adapter package so the core library does not depend on MLX.
 
@@ -53,6 +53,7 @@ Sources/
     ├── Optimization
     ├── LinearAlgebra
     ├── Simulation
+    ├── DataScience
     ├── Combinatorics
     ├── DataProfiling
     └── Internal
@@ -121,6 +122,7 @@ Implemented:
 - Optimization: `minimize` and `maximize` with gradient descent, Newton-Raphson, LBFGS, and Nelder-Mead
 - Linear algebra: `Matrix`, `Vector`, determinant, inverse, solve, and real symmetric eigenvalues/eigenvectors
 - Simulation: Monte Carlo simulations, additive random walks, and finite-state Markov chains
+- Data science integration: `DataTable`, CSV import/export, optional `TabularData.DataFrame` bridges, statistical summaries, and group-by aggregations
 - Combinatorics: factorial, combinations, permutations
 - Probability: tensor-based discrete expected value plus normal, uniform, Poisson, exponential, binomial, beta, gamma, and hypergeometric distributions with CDFs, inverse CDFs, analytical moments, and random sampling
 - Data profiling: Benford, Zipf, Pareto, normality, uniformity, outliers, correlation matrices, trends, growth rates, and `DatasetProfiler.profile(_:)`
@@ -174,6 +176,16 @@ let weather = MarkovChain(
     ]
 )
 let forecast = weather?.simulate(startingAt: "sunny", steps: 7)
+
+let table = DataTable.importCSV("""
+group,value
+a,1
+a,3
+b,10
+""")
+let grouped = table?.grouped(by: "group")
+let summaries = grouped?.summaries()
+let numericValues = table?.numericColumn("value")
 
 let linear = LinearRegression()
 let line = linear.fit(.vector([1, 2, 3]), .vector([3, 5, 7]))
@@ -233,7 +245,7 @@ See [ROADMAP.md](ROADMAP.md) for the detailed phase plan.
 
 Near-term priorities:
 
-- Grow data-science adapters without weakening the tensor-first numerical core.
+- Broaden production polish, numerical validation, and integration ergonomics without weakening the tensor-first numerical core.
 
 ## Contribution Guidelines
 
@@ -249,4 +261,4 @@ Near-term priorities:
 
 ## Rules For Future Contributors And AI Agents
 
-README.md is the authoritative architecture document. If implementation and README disagree, update the implementation to match README unless explicitly instructed otherwise. Do not introduce DataFrame, CSV, JSON table, SQL table, or file-format assumptions into the core library. Those belong in adapters.
+README.md is the authoritative architecture document. If implementation and README disagree, update the implementation to match README unless explicitly instructed otherwise. Do not introduce DataFrame, CSV, JSON table, SQL table, or file-format assumptions into numerical algorithms or backend protocols. Those belong in adapters or clearly separated integration modules such as `Numerica.DataScience`.
