@@ -83,3 +83,8 @@ public extension Numerica {
     /// Numerical optimization routines such as minimization and maximization.
     enum Optimization {}
 }
+
+public extension Numerica {
+    /// Linear algebra routines for vectors and dense matrices.
+    enum LinearAlgebra {}
+}

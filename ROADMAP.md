@@ -177,6 +177,11 @@ if let solution = minimize(
 
 ### Phase 6: Linear Algebra
 
+Status: implemented for dense `Matrix` and `Vector` APIs, determinant, inverse,
+linear system solving, and real symmetric eigenvalues/eigenvectors. Future work
+can add LAPACK-backed specializations, nonsymmetric eigenvalue support, matrix
+factorizations, and batched operations.
+
 Linear algebra should provide Swift-friendly `Matrix` and `Vector` APIs backed
 by Accelerate, BLAS, and LAPACK where beneficial.
 
@@ -189,6 +194,13 @@ Target operations:
 - `solve`
 - `eigenvalues`
 - `eigenvectors`
+
+Example target API:
+
+```swift
+let matrix = Matrix([[4, 7], [2, 6]])!
+let x = matrix.solve(Vector([1, 0]))
+```
 
 ### Phase 7: Simulation
 

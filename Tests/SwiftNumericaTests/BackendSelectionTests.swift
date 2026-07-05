@@ -214,4 +214,28 @@ struct BackendSelectionTests {
         #expect(accelerateVariance.isApproximatelyEqual(to: 4, tolerance: 1e-6))
         #expect(accelerateVariance.isApproximatelyEqual(to: pureVariance, tolerance: 1e-6))
     }
+
+    @Test func pureSwiftAndAccelerateLinearAlgebraAreEquivalent() throws {
+        let matrix = try #require(Matrix([[4, 7], [2, 6]]))
+        let vector = Vector([1, 0])
+        let symmetric = try #require(Matrix([[2, 1], [1, 2]]))
+
+        Numerica.configuration.backend = .pureSwift
+        let pureDeterminant = try #require(Numerica.LinearAlgebra.determinant(matrix))
+        let pureSolution = try #require(Numerica.LinearAlgebra.solve(matrix, vector))
+        let pureEigenvalues = try #require(Numerica.LinearAlgebra.eigenvalues(symmetric))
+
+        Numerica.configuration.backend = .accelerate
+        let accelerateDeterminant = try #require(Numerica.LinearAlgebra.determinant(matrix))
+        let accelerateSolution = try #require(Numerica.LinearAlgebra.solve(matrix, vector))
+        let accelerateEigenvalues = try #require(Numerica.LinearAlgebra.eigenvalues(symmetric))
+
+        #expect(accelerateDeterminant.isApproximatelyEqual(to: pureDeterminant))
+        for (accelerateValue, pureValue) in zip(accelerateSolution.values, pureSolution.values) {
+            #expect(accelerateValue.isApproximatelyEqual(to: pureValue))
+        }
+        for (accelerateValue, pureValue) in zip(accelerateEigenvalues, pureEigenvalues) {
+            #expect(accelerateValue.isApproximatelyEqual(to: pureValue))
+        }
+    }
 }

@@ -5,6 +5,9 @@ internal enum BackendResolver {
     private static let pureSwiftCombinatorics = PureSwiftCombinatoricsBackend()
     private static let accelerateCombinatorics = AccelerateCombinatoricsBackend()
 
+    private static let pureSwiftLinearAlgebra = PureSwiftLinearAlgebraBackend()
+    private static let accelerateLinearAlgebra = AccelerateLinearAlgebraBackend()
+
     internal static func statisticsBackend() throws -> any StatisticsBackend {
         switch try resolvedBackend() {
         case .pureSwift:
@@ -24,6 +27,17 @@ internal enum BackendResolver {
             accelerateCombinatorics
         case .automatic:
             pureSwiftCombinatorics
+        }
+    }
+
+    internal static func linearAlgebraBackend() throws -> any LinearAlgebraBackend {
+        switch try resolvedBackend() {
+        case .pureSwift:
+            pureSwiftLinearAlgebra
+        case .accelerate:
+            accelerateLinearAlgebra
+        case .automatic:
+            pureSwiftLinearAlgebra
         }
     }
 

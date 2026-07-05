@@ -51,6 +51,7 @@ Sources/
     │   └── DistributionAnalysis
     ├── Probability
     ├── Optimization
+    ├── LinearAlgebra
     ├── Combinatorics
     ├── DataProfiling
     └── Internal
@@ -117,6 +118,7 @@ Implemented:
 - Statistical tests: Welch t-test, paired t-test, chi-square goodness-of-fit, one-way ANOVA, and two-sided Mann-Whitney U
 - Regression: simple linear, multiple linear, polynomial, and binary logistic regression with lightweight functions and model-oriented estimators
 - Optimization: `minimize` and `maximize` with gradient descent, Newton-Raphson, LBFGS, and Nelder-Mead
+- Linear algebra: `Matrix`, `Vector`, determinant, inverse, solve, and real symmetric eigenvalues/eigenvectors
 - Combinatorics: factorial, combinations, permutations
 - Probability: tensor-based discrete expected value plus normal, uniform, Poisson, exponential, binomial, beta, gamma, and hypergeometric distributions with CDFs, inverse CDFs, analytical moments, and random sampling
 - Data profiling: Benford, Zipf, Pareto, normality, uniformity, outliers, correlation matrices, trends, growth rates, and `DatasetProfiler.profile(_:)`
@@ -146,6 +148,11 @@ let solution = minimize(
     },
     initialGuess: [0, 0]
 )
+
+let matrix = Matrix([[4, 7], [2, 6]])!
+let determinant = matrix.determinant()
+let inverse = matrix.inverse()
+let linearSolution = matrix.solve(Vector([1, 0]))
 
 let linear = LinearRegression()
 let line = linear.fit(.vector([1, 2, 3]), .vector([3, 5, 7]))
@@ -205,7 +212,7 @@ See [ROADMAP.md](ROADMAP.md) for the detailed phase plan.
 
 Near-term priorities:
 
-- Grow linear algebra, simulation, and data-science adapters without weakening the tensor-first numerical core.
+- Grow simulation and data-science adapters without weakening the tensor-first numerical core.
 
 ## Contribution Guidelines
 
