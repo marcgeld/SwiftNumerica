@@ -155,12 +155,12 @@ Implemented:
 - Hypothesis testing: Welch t-test, paired t-test, chi-square goodness-of-fit, one-way ANOVA, Mann-Whitney U, and Kolmogorov-Smirnov goodness-of-fit with typed results
 - Regression: simple linear, multiple linear, polynomial, and binary logistic regression with lightweight functions and model-oriented estimators
 - Optimization: `minimize` and `maximize` with gradient descent, Newton-Raphson, LBFGS, and Nelder-Mead
-- Linear algebra: `Matrix`, `Vector`, determinant, inverse, solve, and real symmetric eigenvalues/eigenvectors
+- Linear algebra: `Matrix`, `Vector`, determinant, inverse, solve with vector or matrix right-hand sides, Cholesky decomposition, log-determinant, and real symmetric eigenvalues/eigenvectors (near-symmetric inputs within a relative `1e-6` tolerance are symmetrized internally)
 - Simulation: Monte Carlo simulations, additive random walks, and finite-state Markov chains
 - Signal processing: `Signal`, FFT/IFFT, convolution, correlation, autocorrelation, window functions, moving average, detrending, normalization, peak detection, periodogram, spectra, FIR filters, and biquad filtering
 - Data science integration: `DataTable`, CSV import/export, optional `TabularData.DataFrame` bridges, statistical summaries, and group-by aggregations
 - Combinatorics: factorial, combinations, permutations
-- Probability: tensor-based discrete expected value plus normal, uniform, Poisson, exponential, binomial, beta, gamma, and hypergeometric distributions with CDFs, inverse CDFs, analytical moments, and random sampling
+- Probability: tensor-based discrete expected value plus normal, uniform, Poisson, exponential, binomial, beta, gamma, and hypergeometric distributions with CDFs, inverse CDFs, analytical moments, and random sampling, including a deterministic `SeededRandomNumberGenerator` (SplitMix64) for reproducible sampling and simulation
 - Data profiling: Benford, Zipf, Pareto, normality, uniformity, outliers, correlation matrices, trends, growth rates, and `DatasetProfiler.profile(_:)`
 
 ## Example Usage

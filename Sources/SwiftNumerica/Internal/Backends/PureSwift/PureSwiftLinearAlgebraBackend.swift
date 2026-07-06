@@ -51,6 +51,53 @@ internal struct PureSwiftLinearAlgebraBackend: LinearAlgebraBackend {
         return Vector(solution)
     }
 
+    internal func solve(_ matrix: Matrix, _ rightHandSide: Matrix) -> Matrix? {
+        guard matrix.isSquare,
+              matrix.rowCount == rightHandSide.rowCount else { return nil }
+
+        let coefficientRows = matrix.rows
+        var solutionColumns: [[Double]] = []
+        for column in 0..<rightHandSide.columnCount {
+            let target = (0..<rightHandSide.rowCount).map { rightHandSide[$0, column] }
+            guard let solution = LinearSystemMath.solve(coefficientRows, target) else { return nil }
+            solutionColumns.append(solution)
+        }
+
+        let rows = (0..<matrix.rowCount).map { row in
+            solutionColumns.map { $0[row] }
+        }
+        return Matrix(rows)
+    }
+
+    internal func choleskyDecomposition(_ matrix: Matrix) -> Matrix? {
+        guard matrix.isSquare,
+              matrix.rowCount > 0,
+              isSymmetric(matrix) else { return nil }
+
+        let dimension = matrix.rowCount
+        let source = symmetrizedRows(matrix)
+        var factor = Array(repeating: Array(repeating: 0.0, count: dimension), count: dimension)
+
+        for row in 0..<dimension {
+            for column in 0...row {
+                var sum = 0.0
+                for index in 0..<column {
+                    sum += factor[row][index] * factor[column][index]
+                }
+
+                if row == column {
+                    let diagonal = source[row][row] - sum
+                    guard diagonal > 0 else { return nil }
+                    factor[row][column] = diagonal.squareRoot()
+                } else {
+                    factor[row][column] = (source[row][column] - sum) / factor[column][column]
+                }
+            }
+        }
+
+        return Matrix(factor)
+    }
+
     internal func eigenvalues(_ matrix: Matrix) -> [Double]? {
         jacobiEigenDecomposition(matrix)?.values
     }
@@ -65,7 +112,7 @@ internal struct PureSwiftLinearAlgebraBackend: LinearAlgebraBackend {
               isSymmetric(matrix) else { return nil }
 
         let dimension = matrix.rowCount
-        var diagonalized = matrix.rows
+        var diagonalized = symmetrizedRows(matrix)
         var eigenvectors = identityRows(dimension)
         let tolerance = 1e-12
         let maxIterations = Swift.max(50, dimension * dimension * 50)
@@ -122,16 +169,28 @@ internal struct PureSwiftLinearAlgebraBackend: LinearAlgebraBackend {
             for column in (row + 1)..<matrix.columnCount {
                 let upper = matrix[row, column]
                 let lower = matrix[column, row]
-                // Scale the tolerance by the element magnitudes so large
-                // matrices are not rejected for representation-level noise,
-                // while small elements keep an absolute 1e-10 tolerance.
+                // The relative 1e-6 tolerance accepts asymmetry from
+                // single-precision-sourced data (about 1e-7) while rejecting
+                // genuinely nonsymmetric matrices. Decompositions symmetrize
+                // accepted inputs as (A + At) / 2 before factoring, so the
+                // residual asymmetry never reaches the numerics.
                 let scale = Swift.max(Swift.abs(upper), Swift.abs(lower), 1)
-                if Swift.abs(upper - lower) > 1e-10 * scale {
+                if Swift.abs(upper - lower) > 1e-6 * scale {
                     return false
                 }
             }
         }
         return true
+    }
+
+    /// Returns `(A + At) / 2` as row arrays, canceling the residual asymmetry
+    /// that `isSymmetric` tolerates.
+    internal func symmetrizedRows(_ matrix: Matrix) -> [[Double]] {
+        (0..<matrix.rowCount).map { row in
+            (0..<matrix.columnCount).map { column in
+                (matrix[row, column] + matrix[column, row]) / 2
+            }
+        }
     }
 
     private func largestOffDiagonalElement(in rows: [[Double]]) -> (row: Int, column: Int, magnitude: Double) {

@@ -64,11 +64,66 @@ internal struct AccelerateLinearAlgebraBackend: LinearAlgebraBackend {
         guard let factored = luFactorization(matrix.values, dimension: dimension) else { return nil }
         var solution = vector.values
         guard sn_dgetrs_transposed(
-            dimension, factored.values, factored.pivots, &solution
+            dimension, 1, factored.values, factored.pivots, &solution
         ) == 0 else { return nil }
         return Vector(solution)
         #else
         return reference.solve(matrix, vector)
+        #endif
+    }
+
+    internal func solve(_ matrix: Matrix, _ rightHandSide: Matrix) -> Matrix? {
+        guard matrix.isSquare, matrix.rowCount == rightHandSide.rowCount else { return nil }
+
+        #if canImport(Accelerate)
+        let dimension = matrix.rowCount
+        let solutionColumns = rightHandSide.columnCount
+        guard let factored = luFactorization(matrix.values, dimension: dimension) else { return nil }
+
+        // dgetrs expects the right-hand sides in column-major layout.
+        var columnMajor = [Double](repeating: 0, count: dimension * solutionColumns)
+        for row in 0..<dimension {
+            for column in 0..<solutionColumns {
+                columnMajor[column * dimension + row] = rightHandSide[row, column]
+            }
+        }
+        guard sn_dgetrs_transposed(
+            dimension, solutionColumns, factored.values, factored.pivots, &columnMajor
+        ) == 0 else { return nil }
+
+        var rowMajor = [Double](repeating: 0, count: dimension * solutionColumns)
+        for row in 0..<dimension {
+            for column in 0..<solutionColumns {
+                rowMajor[row * solutionColumns + column] = columnMajor[column * dimension + row]
+            }
+        }
+        return Matrix(values: rowMajor, rows: dimension, columns: solutionColumns)
+        #else
+        return reference.solve(matrix, rightHandSide)
+        #endif
+    }
+
+    internal func choleskyDecomposition(_ matrix: Matrix) -> Matrix? {
+        guard matrix.isSquare,
+              matrix.rowCount > 0,
+              reference.isSymmetric(matrix) else { return nil }
+
+        #if canImport(Accelerate)
+        let dimension = matrix.rowCount
+        var buffer = symmetrizedValues(matrix)
+        guard sn_dpotrf(dimension, &buffer) == 0 else { return nil }
+
+        // dpotrf leaves the unfactored triangle untouched; zero the row-major
+        // strict upper triangle so the result is a clean lower-triangular L
+        // with A = L * Lt.
+        for row in 0..<dimension {
+            for column in (row + 1)..<dimension {
+                buffer[row * dimension + column] = 0
+            }
+        }
+        return Matrix(values: buffer, rows: dimension, columns: dimension)
+        #else
+        return reference.choleskyDecomposition(matrix)
         #endif
     }
 
@@ -90,7 +145,7 @@ internal struct AccelerateLinearAlgebraBackend: LinearAlgebraBackend {
 
         #if canImport(Accelerate)
         let dimension = matrix.rowCount
-        var buffer = matrix.values
+        var buffer = symmetrizedValues(matrix)
         var ascendingValues = [Double](repeating: 0, count: dimension)
         guard sn_dsyev(
             dimension, &buffer, &ascendingValues, computeVectors ? 1 : 0
@@ -117,6 +172,19 @@ internal struct AccelerateLinearAlgebraBackend: LinearAlgebraBackend {
     }
 
     #if canImport(Accelerate)
+    /// Returns `(A + At) / 2` as a flat row-major buffer, matching the
+    /// reference backend's symmetrization of accepted near-symmetric inputs.
+    private func symmetrizedValues(_ matrix: Matrix) -> [Double] {
+        let dimension = matrix.rowCount
+        var values = [Double](repeating: 0, count: dimension * dimension)
+        for row in 0..<dimension {
+            for column in 0..<dimension {
+                values[row * dimension + column] = (matrix[row, column] + matrix[column, row]) / 2
+            }
+        }
+        return values
+    }
+
     /// Factors the row-major values with `dgetrf` and rejects matrices whose
     /// pivots fall within the shared singularity tolerance, mirroring the
     /// PureSwift reference behavior of returning `nil` for singular systems.

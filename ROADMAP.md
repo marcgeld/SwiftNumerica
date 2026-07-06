@@ -57,8 +57,10 @@ let p95 = data.percentile(95)
 
 ### Phase 2: Probability Distributions
 
-Status: implemented for the target scalar distribution APIs. Future work can add
-batch tensor APIs and more advanced numerical methods where useful.
+Status: implemented for the target scalar distribution APIs, including a
+deterministic `SeededRandomNumberGenerator` (SplitMix64) for reproducible
+sampling. Future work can add batch tensor APIs and more advanced numerical
+methods where useful.
 
 Distributions should be value types with explicit parameters and no dynamic
 configuration. Scalar APIs should come first; tensorized batch APIs can be added
@@ -183,11 +185,15 @@ if let solution = minimize(
 ### Phase 6: Linear Algebra
 
 Status: implemented for dense `Matrix` and `Vector` APIs, determinant, inverse,
-linear system solving, and real symmetric eigenvalues/eigenvectors. The
-Accelerate backend executes these through LAPACK (dgetrf/dgetri/dgetrs/dsyev)
-via the `CNumericaLAPACK` shim target, which enables Apple's modern
-`ACCELERATE_NEW_LAPACK` interface. Future work can add nonsymmetric eigenvalue
-support, matrix factorizations, and batched operations.
+linear system solving with vector or matrix right-hand sides, Cholesky
+decomposition with a log-determinant convenience, and real symmetric
+eigenvalues/eigenvectors. Symmetric routines symmetrize near-symmetric inputs
+(within a relative `1e-6` tolerance) internally, so single-precision-sourced
+matrices do not need hand-symmetrization. The Accelerate backend executes these
+through LAPACK (dgetrf/dgetri/dgetrs/dpotrf/dsyev) via the `CNumericaLAPACK`
+shim target, which enables Apple's modern `ACCELERATE_NEW_LAPACK` interface.
+Future work can add nonsymmetric eigenvalue support, additional matrix
+factorizations, and batched operations.
 
 Linear algebra should provide Swift-friendly `Matrix` and `Vector` APIs backed
 by Accelerate, BLAS, and LAPACK where beneficial.
@@ -198,7 +204,9 @@ Target operations:
 - `Vector`
 - `determinant`
 - `inverse`
-- `solve`
+- `solve` (vector and matrix right-hand sides)
+- `choleskyDecomposition`
+- `logDeterminant`
 - `eigenvalues`
 - `eigenvectors`
 

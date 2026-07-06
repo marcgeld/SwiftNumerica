@@ -1,3 +1,4 @@
+import Foundation
 import Testing
 
 @testable import SwiftNumerica
@@ -119,4 +120,63 @@ private func multiply(_ matrix: Matrix, by vector: [Double]) -> [Double] {
 
 private func norm(_ vector: [Double]) -> Double {
     vector.map { $0 * $0 }.reduce(0.0) { $0 + $1 }.squareRoot()
+}
+
+@Test func choleskyDecompositionFactorsSymmetricPositiveDefiniteMatrices() throws {
+    // Classic reference example: A = L * Lt with known integer factor.
+    let matrix = try #require(Matrix([[4, 12, -16], [12, 37, -43], [-16, -43, 98]]))
+    let factor = try #require(matrix.choleskyDecomposition())
+    let expected = [[2.0, 0, 0], [6, 1, 0], [-8, 5, 3]]
+
+    for row in 0..<3 {
+        for column in 0..<3 {
+            #expect(factor[row, column].isApproximatelyEqual(to: expected[row][column], tolerance: 1e-10))
+        }
+    }
+
+    // Non-positive-definite and non-symmetric inputs are rejected.
+    #expect(try #require(Matrix([[1, 0], [0, -1]])).choleskyDecomposition() == nil)
+    #expect(try #require(Matrix([[1, 2], [3, 4]])).choleskyDecomposition() == nil)
+}
+
+@Test func logDeterminantMatchesDeterminantForSPDMatrices() throws {
+    let matrix = try #require(Matrix([[4, 1, 2], [1, 5, 3], [2, 3, 6]]))
+    let logDet = try #require(matrix.logDeterminant())
+    let determinant = try #require(matrix.determinant())
+
+    #expect(logDet.isApproximatelyEqual(to: Foundation.log(determinant), tolerance: 1e-10))
+    #expect(logDeterminant(matrix)?.isApproximatelyEqual(to: logDet) == true)
+    #expect(try #require(Matrix([[1, 2], [3, 4]])).logDeterminant() == nil)
+}
+
+@Test func solveSupportsMatrixRightHandSides() throws {
+    let matrix = try #require(Matrix([[4, 7], [2, 6]]))
+    let rightHandSide = try #require(Matrix([[1, 0], [0, 1]]))
+    let solution = try #require(matrix.solve(rightHandSide))
+
+    // Solving against the identity yields the inverse.
+    let inverse = try #require(matrix.inverse())
+    for row in 0..<2 {
+        for column in 0..<2 {
+            #expect(solution[row, column].isApproximatelyEqual(to: inverse[row, column], tolerance: 1e-10))
+        }
+    }
+
+    #expect(solve(matrix, rightHandSide) != nil)
+    #expect(matrix.solve(try #require(Matrix([[1.0], [2], [3]]))) == nil)
+}
+
+@Test func symmetricRoutinesAcceptSinglePrecisionAsymmetry() throws {
+    // Float32 round-tripping introduces relative asymmetry near 1e-7, which
+    // must be symmetrized internally rather than rejected.
+    let noisy = try #require(Matrix([[2, 1 + 1e-7], [1, 2]]))
+
+    let values = try #require(noisy.eigenvalues())
+    #expect(values[0].isApproximatelyEqual(to: 3, tolerance: 1e-6))
+    #expect(values[1].isApproximatelyEqual(to: 1, tolerance: 1e-6))
+    #expect(noisy.eigenvectors() != nil)
+
+    let spdNoisy = try #require(Matrix([[4, 1 + 1e-7], [1, 4]]))
+    #expect(spdNoisy.choleskyDecomposition() != nil)
+    #expect(spdNoisy.logDeterminant() != nil)
 }

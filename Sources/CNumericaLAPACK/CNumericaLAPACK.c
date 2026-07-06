@@ -39,10 +39,16 @@ int sn_dgetri(long n, double *matrix, const long *pivots) {
     return (int)info;
 }
 
-int sn_dgetrs_transposed(long n, const double *factored, const long *pivots, double *rhs) {
+int sn_dgetrs_transposed(
+    long n,
+    long rightHandSideCount,
+    const double *factored,
+    const long *pivots,
+    double *rhs
+) {
     __LAPACK_int info = 0;
     __LAPACK_int dimension = n;
-    __LAPACK_int rightHandSides = 1;
+    __LAPACK_int rightHandSides = rightHandSideCount;
     dgetrs_(
         "T",
         &dimension,
@@ -54,6 +60,13 @@ int sn_dgetrs_transposed(long n, const double *factored, const long *pivots, dou
         &dimension,
         &info
     );
+    return (int)info;
+}
+
+int sn_dpotrf(long n, double *matrix) {
+    __LAPACK_int info = 0;
+    __LAPACK_int dimension = n;
+    dpotrf_("U", &dimension, matrix, &dimension, &info);
     return (int)info;
 }
 
@@ -98,11 +111,24 @@ int sn_dgetri(long n, double *matrix, const long *pivots) {
     return -1000;
 }
 
-int sn_dgetrs_transposed(long n, const double *factored, const long *pivots, double *rhs) {
+int sn_dgetrs_transposed(
+    long n,
+    long rightHandSideCount,
+    const double *factored,
+    const long *pivots,
+    double *rhs
+) {
     (void)n;
+    (void)rightHandSideCount;
     (void)factored;
     (void)pivots;
     (void)rhs;
+    return -1000;
+}
+
+int sn_dpotrf(long n, double *matrix) {
+    (void)n;
+    (void)matrix;
     return -1000;
 }
 

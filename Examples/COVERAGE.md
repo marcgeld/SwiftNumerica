@@ -166,6 +166,7 @@ public symbols.
 | `BinomialDistribution` and members | type | `DiscreteDistributionsExample` |
 | `PoissonDistribution` and members | type | `DiscreteDistributionsExample` |
 | `HypergeometricDistribution` and members | type | `DiscreteDistributionsExample` |
+| `SeededRandomNumberGenerator` | type | `ProbabilityDistributionsExample` |
 
 Distribution member coverage includes public initializer parameters, stored
 parameters, `mean`, `variance`, density or mass functions, `cdf`, `inverseCDF`,
@@ -232,16 +233,24 @@ parameters, `mean`, `variance`, density or mass functions, `cdf`, `inverseCDF`,
 | `Numerica.LinearAlgebra.determinant(_:)` | function | `LinearAlgebraExample` |
 | `Numerica.LinearAlgebra.inverse(_:)` | function | `LinearAlgebraExample` |
 | `Numerica.LinearAlgebra.solve(_:_:)` | function | `LinearAlgebraExample` |
+| `Numerica.LinearAlgebra.solve(_:_:)` (matrix right-hand side) | function | `LinearAlgebraExample` |
+| `Numerica.LinearAlgebra.choleskyDecomposition(_:)` | function | `LinearAlgebraExample` |
+| `Numerica.LinearAlgebra.logDeterminant(_:)` | function | `LinearAlgebraExample` |
 | `Numerica.LinearAlgebra.eigenvalues(_:)` | function | `LinearAlgebraExample` |
 | `Numerica.LinearAlgebra.eigenvectors(_:)` | function | `LinearAlgebraExample` |
 | `Matrix.determinant()` | method | `LinearAlgebraExample` |
 | `Matrix.inverse()` | method | `LinearAlgebraExample` |
 | `Matrix.solve(_:)` | method | `LinearAlgebraExample` |
+| `Matrix.solve(_:)` (matrix right-hand side) | method | `LinearAlgebraExample` |
+| `Matrix.choleskyDecomposition()` | method | `LinearAlgebraExample` |
+| `Matrix.logDeterminant()` | method | `LinearAlgebraExample` |
 | `Matrix.eigenvalues()` | method | `LinearAlgebraExample` |
 | `Matrix.eigenvectors()` | method | `LinearAlgebraExample` |
 | `determinant(_:)` | free function | `LinearAlgebraExample` |
 | `inverse(_:)` | free function | `LinearAlgebraExample` |
 | `solve(_:_:)` | free function | `LinearAlgebraExample` |
+| `choleskyDecomposition(_:)` | free function | `LinearAlgebraExample` |
+| `logDeterminant(_:)` | free function | `LinearAlgebraExample` |
 | `eigenvalues(_:)` | free function | `LinearAlgebraExample` |
 | `eigenvectors(_:)` | free function | `LinearAlgebraExample` |
 

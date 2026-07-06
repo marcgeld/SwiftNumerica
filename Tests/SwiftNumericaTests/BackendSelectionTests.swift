@@ -295,6 +295,44 @@ struct BackendSelectionTests {
         #expect(Numerica.LinearAlgebra.eigenvalues(matrix) == nil)
     }
 
+    @Test func pureSwiftAndAccelerateCholeskyAndMatrixSolveAreEquivalent() throws {
+        let symmetric = try #require(Matrix([[4, 1, 2], [1, 5, 3], [2, 3, 6]]))
+        let matrix = try #require(Matrix([[4, 7, 2], [2, 6, 3], [1, 5, 9]]))
+        let rightHandSide = try #require(Matrix([[1, 0], [0, 2], [3, 1]]))
+
+        Numerica.configuration.backend = .pureSwift
+        let pureFactor = try #require(Numerica.LinearAlgebra.choleskyDecomposition(symmetric))
+        let pureLogDeterminant = try #require(Numerica.LinearAlgebra.logDeterminant(symmetric))
+        let pureSolution = try #require(Numerica.LinearAlgebra.solve(matrix, rightHandSide))
+
+        Numerica.configuration.backend = .accelerate
+        let accelerateFactor = try #require(Numerica.LinearAlgebra.choleskyDecomposition(symmetric))
+        let accelerateLogDeterminant = try #require(Numerica.LinearAlgebra.logDeterminant(symmetric))
+        let accelerateSolution = try #require(Numerica.LinearAlgebra.solve(matrix, rightHandSide))
+
+        for row in 0..<symmetric.rowCount {
+            for column in 0..<symmetric.columnCount {
+                #expect(
+                    accelerateFactor[row, column]
+                        .isApproximatelyEqual(to: pureFactor[row, column], tolerance: 1e-9))
+            }
+        }
+        #expect(accelerateLogDeterminant.isApproximatelyEqual(to: pureLogDeterminant, tolerance: 1e-9))
+        for row in 0..<pureSolution.rowCount {
+            for column in 0..<pureSolution.columnCount {
+                #expect(
+                    accelerateSolution[row, column]
+                        .isApproximatelyEqual(to: pureSolution[row, column], tolerance: 1e-9))
+            }
+        }
+
+        // Both backends reject non-SPD input the same way.
+        let indefinite = try #require(Matrix([[1, 0], [0, -1]]))
+        #expect(Numerica.LinearAlgebra.choleskyDecomposition(indefinite) == nil)
+        Numerica.configuration.backend = .pureSwift
+        #expect(Numerica.LinearAlgebra.choleskyDecomposition(indefinite) == nil)
+    }
+
     @Test func pureSwiftAndAccelerateConvolutionIsEquivalent() throws {
         let signal = Tensor.vector([1, 2, 3, 4, 5, -1, -2, 0.5])
         let kernel = Tensor.vector([2, -1, 0.5])

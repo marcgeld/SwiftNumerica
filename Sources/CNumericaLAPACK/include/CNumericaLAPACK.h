@@ -27,10 +27,24 @@ int sn_dgetrf(long n, double *matrix, long *pivots);
 /// Inverts an LU-factorized matrix in place (dgetri).
 int sn_dgetri(long n, double *matrix, const long *pivots);
 
-/// Solves `transpose(factored) * x = rhs` for one right-hand side using an
-/// LU factorization from `sn_dgetrf` (dgetrs with TRANS = 'T'). `rhs` is
-/// overwritten with the solution.
-int sn_dgetrs_transposed(long n, const double *factored, const long *pivots, double *rhs);
+/// Solves `transpose(factored) * X = rhs` for `rightHandSideCount` columns
+/// using an LU factorization from `sn_dgetrf` (dgetrs with TRANS = 'T').
+/// `rhs` holds the right-hand sides in column-major `n x rightHandSideCount`
+/// layout and is overwritten with the solution.
+int sn_dgetrs_transposed(
+    long n,
+    long rightHandSideCount,
+    const double *factored,
+    const long *pivots,
+    double *rhs
+);
+
+/// Cholesky-factorizes a symmetric positive definite `n x n` matrix in place
+/// (dpotrf with UPLO = 'U'). Because LAPACK sees the row-major buffer as its
+/// transpose, the computed factor occupies the row-major lower triangle; the
+/// row-major upper triangle keeps its original values and callers must zero
+/// it. Returns `info > 0` when the matrix is not positive definite.
+int sn_dpotrf(long n, double *matrix);
 
 /// Computes eigenvalues (ascending) and, when `computeVectors` is nonzero,
 /// orthonormal eigenvectors of a symmetric `n x n` matrix in place (dsyev).

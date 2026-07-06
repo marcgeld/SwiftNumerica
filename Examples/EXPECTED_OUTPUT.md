@@ -216,7 +216,11 @@ Expected value (expected 0 x 0.2 + 10 x 0.5 + 20 x 0.3 = 11): 11.0
 - Solve values are approximately `[0.6, -0.2]`.
 - Eigenvalues are `[3.0, 1.0]`.
 - Eigenvectors are approximately
-  `[0.7071067811865475, 0.7071067811865476, 0.7071067811865476, -0.7071067811865475]`.
+  `[0.7071067811865475, 0.7071067811865476, 0.7071067811865476, -0.7071067811865475]`
+  (eigenvector signs may vary between backends).
+- Cholesky factor values are approximately `[2, 0, 0, 6, 1, 0, -8, 5, 3]`.
+- Log-determinant is approximately `3.58351893845611` (`log(36)`).
+- Solving with an identity right-hand side reproduces the inverse values.
 
 ## LinearRegressionExample
 

@@ -7,16 +7,9 @@ import SwiftNumerica
 // cdf, inverseCDF, analytical moments, probability aliases, and deterministic
 // RNG-backed samples.
 
-struct FixedGenerator: RandomNumberGenerator {
-    var state: UInt64 = 0x1234_5678_9abc_def0
-
-    mutating func next() -> UInt64 {
-        state = 2862933555777941757 &* state &+ 3037000493
-        return state
-    }
-}
-
-var generator = FixedGenerator()
+// SeededRandomNumberGenerator (SplitMix64) makes sampling reproducible:
+// the same seed always produces the same sample sequence.
+var generator = SeededRandomNumberGenerator(seed: 0x1234_5678_9abc_def0)
 let values = Tensor.vector([0, 1, 2])
 let probabilities = Tensor.vector([0.2, 0.5, 0.3])
 let expectedValue = Numerica.Probability.ExpectedValue.discrete(values: values, probabilities: probabilities)

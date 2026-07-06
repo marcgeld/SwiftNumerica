@@ -125,3 +125,22 @@ import Testing
     #expect(try #require(distribution.inverseCDF(0.5)).isApproximatelyEqual(to: 0.5, tolerance: 1e-8))
     #expect(distribution.sample(count: 5).allSatisfy { (0...1).contains($0) })
 }
+
+@Test func seededRandomNumberGeneratorIsDeterministic() throws {
+    var first = SeededRandomNumberGenerator(seed: 42)
+    var second = SeededRandomNumberGenerator(seed: 42)
+    var different = SeededRandomNumberGenerator(seed: 43)
+
+    let firstSequence = (0..<8).map { _ in first.next() }
+    let secondSequence = (0..<8).map { _ in second.next() }
+    let differentSequence = (0..<8).map { _ in different.next() }
+
+    #expect(firstSequence == secondSequence)
+    #expect(firstSequence != differentSequence)
+
+    // Distribution sampling is reproducible with the same seed.
+    let normal = try #require(Numerica.Probability.NormalDistribution())
+    var generatorA = SeededRandomNumberGenerator(seed: 7)
+    var generatorB = SeededRandomNumberGenerator(seed: 7)
+    #expect(normal.sample(count: 16, using: &generatorA) == normal.sample(count: 16, using: &generatorB))
+}
