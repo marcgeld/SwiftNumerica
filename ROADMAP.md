@@ -18,8 +18,8 @@ to become a full SciPy clone.
   processing, and linear algebra workflows.
 - Keep the numerical core tensor-first. DataFrame, CSV, SQL, and file-format
   integration belongs in adapters or clearly separated integration modules.
-- Keep MLX as an optional adapter package, not a dependency of the SwiftNumerica
-  core library.
+- Keep MLX behind an opt-in package trait, never a default dependency of the
+  SwiftNumerica core library.
 
 ## Prioritization
 
@@ -478,7 +478,7 @@ let dense = laplacian?.denseMatrix()
   filtering when it improves performance without leaking backend details.
 - Prefer SIMD for small fixed-width operations when it improves clarity and
   performance.
-- Keep MLX interoperability in `Adapters/SwiftNumericaMLX` so users can convert
+- Keep MLX interoperability behind the `MLX` package trait so users can convert
   tensors to MLX arrays without making MLX a transitive dependency of the core
   package.
 - Keep backend details internal. Public APIs should remain backend-independent.

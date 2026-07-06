@@ -16,7 +16,21 @@ let package = Package(
         .library(
             name: "SwiftNumerica",
             targets: ["SwiftNumerica"]
-        )
+        ),
+        .library(
+            name: "SwiftNumericaMLX",
+            targets: ["SwiftNumericaMLX"]
+        ),
+    ],
+    traits: [
+        .trait(
+            name: "MLX",
+            description: "Enables MLX interoperability: Tensor, Matrix, and Vector conversions to and from MLXArray through the SwiftNumericaMLX product."
+        ),
+        .default(enabledTraits: []),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/ml-explore/mlx-swift", from: "0.31.0")
     ],
     targets: [
         .target(
@@ -35,6 +49,13 @@ let package = Package(
         .target(
             name: "SwiftNumerica",
             dependencies: ["CNumericaLAPACK"]
+        ),
+        .target(
+            name: "SwiftNumericaMLX",
+            dependencies: [
+                "SwiftNumerica",
+                .product(name: "MLX", package: "mlx-swift", condition: .when(traits: ["MLX"])),
+            ]
         ),
         .testTarget(
             name: "SwiftNumericaTests",

@@ -1,4 +1,4 @@
-name: MLX Adapter
+name: MLX Trait
 
 on:
   push:
@@ -6,13 +6,13 @@ on:
       - main
       - "codex/**"
     paths:
-      - "Adapters/SwiftNumericaMLX/**"
+      - "Sources/SwiftNumericaMLX/**"
       - "Sources/SwiftNumerica/**"
       - "Package.swift"
       - ".github/workflows/mlx-adapter.yml"
   pull_request:
     paths:
-      - "Adapters/SwiftNumericaMLX/**"
+      - "Sources/SwiftNumericaMLX/**"
       - "Sources/SwiftNumerica/**"
       - "Package.swift"
       - ".github/workflows/mlx-adapter.yml"
@@ -22,12 +22,12 @@ permissions:
   contents: read
 
 concurrency:
-  group: mlx-adapter-${{ github.ref }}
+  group: mlx-trait-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
-    name: Build MLX adapter
+    name: Build with MLX trait enabled
     runs-on: macos-26
 
     steps:
@@ -37,5 +37,5 @@ jobs:
       - name: Show Swift version
         run: swift --version
 
-      - name: Build adapter
-        run: swift build --package-path Adapters/SwiftNumericaMLX
+      - name: Build with MLX trait
+        run: swift build --traits MLX

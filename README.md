@@ -10,8 +10,8 @@ The correctness baseline is PureSwift, and accelerated backends already use
 Accelerate, vDSP, BLAS, and LAPACK where they provide clear value on Apple
 platforms. Public APIs stay backend-independent so future SIMD, Metal, or other
 hardware-specific implementations can be added without changing user code. MLX
-interoperability lives in an optional adapter package so the core library does
-not depend on MLX.
+interoperability lives behind the opt-in `MLX` package trait so the core
+library does not depend on MLX.
 
 ## Tensor-First Architecture
 
@@ -42,6 +42,8 @@ All statistics and data profiling APIs accept `Tensor<Double>`.
 Sources/
 ├── CNumericaLAPACK
 │   └── C shim exposing Accelerate's modern LAPACK interface
+├── SwiftNumericaMLX
+│   └── Trait-gated MLX conversion product
 └── SwiftNumerica
     ├── Numerica.swift
     ├── Tensor
@@ -68,9 +70,6 @@ Sources/
         ├── Backends
         ├── Protocols
         └── Validation
-Adapters/
-└── SwiftNumericaMLX
-    └── Optional MLX conversion package
 Examples/
 └── Standalone executable example package
 ```
@@ -78,7 +77,7 @@ Examples/
 ## Requirements
 
 - Core package: Swift tools 6.2 or newer.
-- Optional MLX adapter: Swift tools 6.3 or newer, plus MLX Swift's platform and
+- Optional MLX support (the `MLX` package trait): MLX Swift's platform and
   runtime requirements.
 - Supported Apple platforms are declared in `Package.swift`: macOS 14, iOS 17,
   tvOS 17, watchOS 10, and visionOS 1 or newer.
@@ -125,13 +124,25 @@ A Swift target cannot define those macros safely:
 
 A C target avoids all of this: `cSettings: [.define(...)]` is a safe setting that applies when the target compiles, so `Sources/CNumericaLAPACK` enables the modern interface and exposes thin wrapper functions that the Swift backend calls. This mirrors Apple's own documented approach in [Solving systems of linear equations with LAPACK](https://developer.apple.com/documentation/accelerate/solving-systems-of-linear-equations-with-lapack), which also wraps the LAPACK routines in helper functions. On platforms without Accelerate the target compiles to stubs that report unavailability, and the backends fall back to the PureSwift reference implementation.
 
-## Optional MLX Adapter
+## Optional MLX Support
 
-The core `SwiftNumerica` package intentionally has no MLX dependency. MLX
-interoperability lives in a separate package at
-[Adapters/SwiftNumericaMLX](Adapters/SwiftNumericaMLX), which is built and
-release-verified by CI for the same release tag and imported only by projects
-that need MLX arrays.
+MLX interoperability ships as the trait-gated `SwiftNumericaMLX` product in
+this package. The `MLX` package trait is disabled by default, so the core
+`SwiftNumerica` build never compiles or links MLX; consumers opt in by
+enabling the trait on the dependency:
+
+```swift
+dependencies: [
+    .package(
+        url: "https://github.com/marcgeld/SwiftNumerica.git",
+        from: "0.1.1",
+        traits: ["MLX"]
+    )
+]
+```
+
+and depending on the `SwiftNumericaMLX` product. The module provides `Tensor`,
+`Matrix`, and `Vector` conversions to and from `MLXArray`:
 
 ```swift
 import SwiftNumerica
@@ -140,7 +151,14 @@ import SwiftNumericaMLX
 let tensor = Tensor.vector([1, 2, 3])
 let array = tensor.mlxArray()
 let roundTrip = Tensor<Double>(mlxArray: array)
+
+let matrix = Matrix([[1, 2], [3, 4]])!
+let matrixArray = matrix.mlxArray()
+let matrixRoundTrip = Matrix(mlxArray: matrixArray)
 ```
+
+Without the trait, `SwiftNumericaMLX` compiles to an empty module and the MLX
+package is never built or linked.
 
 Existing optional-returning numerical APIs preserve their current signatures. Code that needs explicit backend availability errors should call `try Numerica.resolvedBackend()` after changing `Numerica.configuration.backend`.
 
@@ -372,19 +390,17 @@ let package = Package(
 
 The CI workflow validates this packaging contract by creating a separate consumer package, importing `SwiftNumerica`, and running a small executable.
 
-The optional MLX adapter is intentionally not exposed as a root package product,
-because that would make MLX part of the core package dependency graph. To use
-the adapter from this repository, add the adapter package by path from a checkout
-of the matching release tag. See
-[Adapters/SwiftNumericaMLX/README.md](Adapters/SwiftNumericaMLX/README.md) for
-the adapter-specific dependency snippet and MLX runtime notes.
+MLX support is exposed as the `SwiftNumericaMLX` product behind the disabled-by-
+default `MLX` package trait, so MLX never enters the dependency graph of
+consumers that do not enable it. See the "Optional MLX Support" section above
+for the dependency snippet.
 
 ## Continuous Integration And Releases
 
 GitHub Actions workflows live in `.github/workflows`.
 
 - `CI` builds the package, runs tests, and validates package consumption from another Swift package in one job.
-- `MLX Adapter` builds the optional `Adapters/SwiftNumericaMLX` package separately when adapter or core sources change.
+- `MLX Trait` builds the package with the `MLX` trait enabled when MLX or core sources change.
 - `Release` can run when a `v*` tag is pushed or manually through `workflow_dispatch`.
 - Manual releases require an existing semantic tag such as `v0.1.0`.
 - Release builds run `swift build -c release` and `swift test` before creating the GitHub Release.
