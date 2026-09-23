@@ -38,6 +38,9 @@ jobs:
       - name: Test
         run: swift test
 
+      - name: Test TabularData trait
+        run: swift test --traits TabularData
+
       - name: Build and run examples
         working-directory: Examples
         run: |

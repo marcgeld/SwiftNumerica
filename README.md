@@ -34,7 +34,10 @@ let matrixLike = try tensor.reshaped(to: [2, 3])
 
 Reshape dimensions must be positive integers, except `[]`, which represents a scalar tensor. The product of the requested shape must equal the tensor value count. Invalid shapes throw `TensorError.invalidShape`; incompatible element counts throw `TensorError.incompatibleShape`.
 
-All statistics and data profiling APIs accept `Tensor<Double>`.
+All statistics and data profiling APIs accept `Tensor<Double>`. The optional
+Apple `TabularData.DataFrame` adapter is provided by the `TabularData` package
+trait and the `SwiftNumericaTabularData` product; the core target does not
+depend on TabularData.
 
 Estimate a confidence interval for a sample mean with the Student's t distribution:
 
@@ -53,6 +56,8 @@ Sources/
 │   └── C shim exposing Accelerate's modern LAPACK interface
 ├── SwiftNumericaMLX
 │   └── Trait-gated MLX conversion product
+├── SwiftNumericaTabularData
+│   └── Trait-gated Apple TabularData DataFrame adapter
 └── SwiftNumerica
     ├── Numerica.swift
     ├── Tensor
@@ -88,6 +93,8 @@ Examples/
 - Core package: Swift tools 6.2 or newer.
 - Optional MLX support (the `MLX` package trait): MLX Swift's platform and
   runtime requirements.
+- Optional TabularData support (the `TabularData` package trait): requires an
+  Apple platform where the system `TabularData` framework is available.
 - Supported Apple platforms are declared in `Package.swift`: macOS 14, iOS 17,
   tvOS 17, watchOS 10, and visionOS 1 or newer.
 
@@ -189,7 +196,7 @@ Implemented:
 - Linear algebra: `Matrix`, `Vector`, determinant, inverse, solve with vector or matrix right-hand sides, Cholesky decomposition, log-determinant, and real symmetric eigenvalues/eigenvectors (near-symmetric inputs within a relative `1e-6` tolerance are symmetrized internally)
 - Simulation: Monte Carlo simulations, additive random walks, and finite-state Markov chains
 - Signal processing: `Signal`, FFT/IFFT, convolution, correlation, autocorrelation, window functions, moving average, detrending, normalization, peak detection, periodogram, spectra, FIR filters, and biquad filtering
-- Data science integration: `DataTable`, CSV import/export, optional `TabularData.DataFrame` bridges, statistical summaries, and group-by aggregations
+- Data science integration: `DataTable`, CSV import/export, statistical summaries, and group-by aggregations; opt-in `TabularData.DataFrame` bridges through `SwiftNumericaTabularData`
 - Combinatorics: factorial, combinations, permutations
 - Probability: tensor-based discrete expected value plus normal, uniform, Poisson, exponential, binomial, beta, gamma, and hypergeometric distributions with CDFs, inverse CDFs, analytical moments, and random sampling, including a deterministic `SeededRandomNumberGenerator` (SplitMix64) for reproducible sampling and simulation
 - Data profiling: Benford, Zipf, Pareto, normality, uniformity, outliers, correlation matrices, trends, growth rates, and `DatasetProfiler.profile(_:)`
@@ -401,18 +408,58 @@ let package = Package(
 )
 ```
 
-The CI workflow validates this packaging contract by creating a separate consumer package, importing `SwiftNumerica`, and running a small executable.
+The `Examples/` package is a separate SwiftPM consumer. CI builds it and runs
+each executable to check that the public package products remain usable from a
+downstream target.
 
 MLX support is exposed as the `SwiftNumericaMLX` product behind the disabled-by-
 default `MLX` package trait, so MLX never enters the dependency graph of
 consumers that do not enable it. See the "Optional MLX Support" section above
 for the dependency snippet.
 
+Apple `TabularData` integration is similarly opt-in. Enable the `TabularData`
+trait on the package dependency and add the `SwiftNumericaTabularData` product
+to the target to expose `DataTable`/`DataFrame` conversions:
+
+```swift
+.package(
+    url: "https://github.com/marcgeld/SwiftNumerica.git",
+    from: "0.1.1",
+    traits: ["TabularData"]
+)
+```
+
+Add the adapter product to the target:
+
+```swift
+.target(
+    name: "MyApp",
+    dependencies: [
+        .product(name: "SwiftNumerica", package: "SwiftNumerica"),
+        .product(name: "SwiftNumericaTabularData", package: "SwiftNumerica"),
+    ]
+)
+```
+
+Then import both modules where the bridge is used:
+
+```swift
+import SwiftNumerica
+import SwiftNumericaTabularData
+
+let table = DataTable(columns: ["value"], rows: [["1.5"]])!
+let frame = table.dataFrame()
+```
+
+Without the trait, the core `SwiftNumerica` product stays independent of the
+TabularData framework and the adapter module contains no bridge API.
+
 ## Continuous Integration And Releases
 
 GitHub Actions workflows live in `.github/workflows`.
 
-- `CI` builds the package, runs tests, and validates package consumption from another Swift package in one job.
+- `CI` builds the package, runs tests, and builds/runs the standalone consumer examples.
+- `CI` also runs the `SwiftNumericaTabularData` adapter tests with the `TabularData` trait enabled.
 - `MLX Trait` builds the package with the `MLX` trait enabled when MLX or core sources change.
 - `Release` can run when a `v*` tag is pushed or manually through `workflow_dispatch`.
 - Manual releases require an existing semantic tag such as `v0.1.0`.

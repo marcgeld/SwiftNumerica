@@ -21,11 +21,19 @@ let package = Package(
             name: "SwiftNumericaMLX",
             targets: ["SwiftNumericaMLX"]
         ),
+        .library(
+            name: "SwiftNumericaTabularData",
+            targets: ["SwiftNumericaTabularData"]
+        ),
     ],
     traits: [
         .trait(
             name: "MLX",
             description: "Enables MLX interoperability: Tensor, Matrix, and Vector conversions to and from MLXArray through the SwiftNumericaMLX product."
+        ),
+        .trait(
+            name: "TabularData",
+            description: "Enables DataTable and Apple TabularData DataFrame conversions through the SwiftNumericaTabularData product."
         ),
         .default(enabledTraits: []),
     ],
@@ -57,9 +65,23 @@ let package = Package(
                 .product(name: "MLX", package: "mlx-swift", condition: .when(traits: ["MLX"])),
             ]
         ),
+        .target(
+            name: "SwiftNumericaTabularData",
+            dependencies: ["SwiftNumerica"],
+            swiftSettings: [
+                .define("SWIFTNUMERICA_TABULARDATA", .when(traits: ["TabularData"])),
+            ]
+        ),
         .testTarget(
             name: "SwiftNumericaTests",
             dependencies: ["SwiftNumerica"]
+        ),
+        .testTarget(
+            name: "SwiftNumericaTabularDataTests",
+            dependencies: ["SwiftNumerica", "SwiftNumericaTabularData"],
+            swiftSettings: [
+                .define("SWIFTNUMERICA_TABULARDATA", .when(traits: ["TabularData"])),
+            ]
         ),
     ],
     swiftLanguageModes: [.v6]
