@@ -77,6 +77,32 @@ public extension Numerica.Statistics {
             }
         }
 
+        /// Estimates a two-sided confidence interval for a sample mean using
+        /// the Student's t distribution and the sample standard deviation.
+        ///
+        /// - Parameters:
+        ///   - sample: A sample containing at least two finite values.
+        ///   - confidenceLevel: The requested confidence level, strictly between 0 and 1.
+        /// - Returns: The interval, or `nil` when the sample or confidence level is invalid.
+        public static func meanConfidenceInterval(
+            _ sample: Tensor<Double>,
+            confidenceLevel: Double = 0.95
+        ) throws -> ConfidenceInterval? {
+            guard sample.count > 1,
+                  sample.values.allSatisfy(\.isFinite),
+                  isValidConfidenceLevel(confidenceLevel),
+                  let estimate = try Numerica.Statistics.mean(sample),
+                  let standardDeviation = try Numerica.Statistics.sampleStandardDeviation(sample)
+            else { return nil }
+
+            return meanDifferenceConfidenceInterval(
+                estimate: estimate,
+                standardError: standardDeviation / Double(sample.count).squareRoot(),
+                degreesOfFreedom: Double(sample.count - 1),
+                confidenceLevel: confidenceLevel
+            )
+        }
+
         /// Performs Welch's two-sample t-test.
         ///
         /// - Parameters:

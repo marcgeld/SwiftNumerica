@@ -64,6 +64,17 @@ public extension Tensor where Scalar == Double {
         try Numerica.Statistics.sampleStandardDeviation(self)
     }
 
+    /// Estimates a two-sided confidence interval for the tensor's sample mean.
+    ///
+    /// Uses the Student's t distribution and requires at least two finite values.
+    func meanConfidenceInterval(confidenceLevel: Double = 0.95) throws
+        -> Numerica.Statistics.HypothesisTesting.ConfidenceInterval? {
+        try Numerica.Statistics.HypothesisTesting.meanConfidenceInterval(
+            self,
+            confidenceLevel: confidenceLevel
+        )
+    }
+
     /// Returns the population skewness of the tensor values.
     func skewness() throws -> Double? {
         try Numerica.Statistics.skewness(self)

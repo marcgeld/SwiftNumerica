@@ -36,6 +36,15 @@ Reshape dimensions must be positive integers, except `[]`, which represents a sc
 
 All statistics and data profiling APIs accept `Tensor<Double>`.
 
+Estimate a confidence interval for a sample mean with the Student's t distribution:
+
+```swift
+let sample = Tensor<Double>.vector([1, 2, 3, 4, 5])
+let interval = try sample.meanConfidenceInterval(confidenceLevel: 0.95)
+```
+
+The interval requires at least two finite observations. Its confidence level must be strictly between 0 and 1; invalid inputs return `nil`.
+
 ## Package Structure
 
 ```text

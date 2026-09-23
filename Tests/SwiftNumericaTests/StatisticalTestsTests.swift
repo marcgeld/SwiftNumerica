@@ -2,6 +2,43 @@ import Testing
 
 @testable import SwiftNumerica
 
+@Test func meanConfidenceIntervalUsesStudentTForSmallSamples() throws {
+    let interval = try #require(
+        try Numerica.Statistics.HypothesisTesting.meanConfidenceInterval(
+            .vector([1, 2, 3, 4, 5])
+        )
+    )
+
+    #expect(interval.lowerBound.isApproximatelyEqual(to: 1.036756838522439, tolerance: 1e-8))
+    #expect(interval.upperBound.isApproximatelyEqual(to: 4.963243161477561, tolerance: 1e-8))
+    #expect(interval.confidenceLevel == 0.95)
+}
+
+@Test func tensorMeanConfidenceIntervalSupportsCustomConfidenceLevel() throws {
+    let interval = try #require(
+        try Tensor<Double>.vector([2, 4, 6, 8]).meanConfidenceInterval(confidenceLevel: 0.90)
+    )
+
+    #expect(interval.lowerBound < 5)
+    #expect(interval.upperBound > 5)
+    #expect(interval.confidenceLevel == 0.90)
+}
+
+@Test func meanConfidenceIntervalRejectsInvalidSamplesAndLevels() throws {
+    #expect(try Numerica.Statistics.HypothesisTesting.meanConfidenceInterval(.vector([1])) == nil)
+    #expect(
+        try Numerica.Statistics.HypothesisTesting.meanConfidenceInterval(
+            .vector([1, 2]),
+            confidenceLevel: 1
+        ) == nil
+    )
+    #expect(
+        try Numerica.Statistics.HypothesisTesting.meanConfidenceInterval(
+            .vector([1, .nan])
+        ) == nil
+    )
+}
+
 @Test func welchTTestDetectsDifferentIndependentMeans() throws {
     let result = try #require(
         try HypothesisTesting.welchTTest(
