@@ -7,7 +7,7 @@ public extension Numerica.Combinatorics {
     ///   - n: The number of available items.
     ///   - r: The number of selected items.
     /// - Returns: The number of combinations, or `nil` when the inputs are invalid.
-    static func combinations(n: Int, r: Int) -> Int? {
-        try? BackendResolver.combinatoricsBackend().combinations(n: n, r: r)
+    static func combinations(n: Int, r: Int) throws -> Int? {
+        try BackendResolver.combinatoricsBackend().combinations(n: n, r: r)
     }
 }

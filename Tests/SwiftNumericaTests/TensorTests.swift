@@ -64,3 +64,13 @@ import Testing
         try tensor.reshaped(to: [4, 4])
     }
 }
+
+@Test func shapeRejectsOverflowingElementCount() {
+    #expect(Shape([Int.max, 2]) == nil)
+}
+
+@Test func tensorReshapeRejectsOverflowingElementCount() {
+    #expect(throws: TensorError.incompatibleShape) {
+        try Tensor.vector([1, 2]).reshaped(to: [Int.max, 2])
+    }
+}

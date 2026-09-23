@@ -4,7 +4,7 @@ import Testing
 
 @Test func linearRegressionModelFitsAndPredicts() throws {
     let model = LinearRegression()
-    let result = try #require(model.fit(.vector([1, 2, 3]), .vector([3, 5, 7])))
+    let result = try #require(try model.fit(.vector([1, 2, 3]), .vector([3, 5, 7])))
 
     #expect(result.slope.isApproximatelyEqual(to: 2))
     #expect(result.intercept.isApproximatelyEqual(to: 1))
@@ -20,7 +20,7 @@ import Testing
     let model = try #require(PolynomialRegression(degree: 2))
     let x = Tensor.vector([-2, -1, 0, 1, 2])
     let y = Tensor.vector(x.values.map { 1 + 2 * $0 + 3 * $0 * $0 })
-    let result = try #require(model.fit(x, y))
+    let result = try #require(try model.fit(x, y))
 
     #expect(result.degree == 2)
     #expect(result.coefficients[0].isApproximatelyEqual(to: 1, tolerance: 1e-10))
@@ -33,7 +33,7 @@ import Testing
 @Test func polynomialRegressionNamespaceFunctionDelegatesToModel() throws {
     let x = Tensor.vector([-2, -1, 0, 1, 2])
     let y = Tensor.vector(x.values.map { 1 + $0 * $0 })
-    let result = try #require(Numerica.Statistics.polynomialRegression(x: x, y: y, degree: 2))
+    let result = try #require(try Numerica.Statistics.polynomialRegression(x: x, y: y, degree: 2))
 
     #expect(result.predict(4).isApproximatelyEqual(to: 17, tolerance: 1e-10))
 }
@@ -52,7 +52,7 @@ import Testing
         ]))
     let target = Tensor.vector([0, 0, 1, 1])
     let model = try #require(LogisticRegression(learningRate: 0.5, iterations: 2_000))
-    let result = try #require(model.fit(features: features, target: target))
+    let result = try #require(try model.fit(features: features, target: target))
 
     #expect(try #require(result.predict(.vector([0]))) == 0)
     #expect(try #require(result.predict(.vector([3]))) == 1)

@@ -51,10 +51,13 @@ extension Numerica.DataProfiling {
 
     private static func leadingDigit(_ value: Double) -> Int? {
         var magnitude = abs(value)
-        guard magnitude >= 1 else { return nil }
+        guard magnitude.isFinite, magnitude > 0 else { return nil }
+        while magnitude < 1 {
+            magnitude *= 10
+        }
         while magnitude >= 10 {
             magnitude /= 10
         }
-        return Int(magnitude)
+        return Int(magnitude.rounded(.down))
     }
 }

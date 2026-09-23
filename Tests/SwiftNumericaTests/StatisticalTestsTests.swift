@@ -4,7 +4,7 @@ import Testing
 
 @Test func welchTTestDetectsDifferentIndependentMeans() throws {
     let result = try #require(
-        HypothesisTesting.welchTTest(
+        try HypothesisTesting.welchTTest(
             .vector([8, 9, 10, 11, 12]),
             .vector([1, 2, 3, 4, 5])
         )
@@ -21,7 +21,7 @@ import Testing
 
 @Test func oneSidedWelchTTestUsesAlternativeHypothesis() throws {
     let result = try #require(
-        Numerica.Statistics.HypothesisTesting.welchTTest(
+        try Numerica.Statistics.HypothesisTesting.welchTTest(
             .vector([8, 9, 10, 11, 12]),
             .vector([1, 2, 3, 4, 5]),
             alternative: .greater
@@ -33,7 +33,7 @@ import Testing
 
 @Test func pairedTTestUsesPairwiseDifferences() throws {
     let result = try #require(
-        HypothesisTesting.pairedTTest(
+        try HypothesisTesting.pairedTTest(
             .vector([5, 7, 8, 10, 11]),
             .vector([1, 2, 3, 4, 5])
         )
@@ -46,8 +46,8 @@ import Testing
     #expect(result.method == "Paired t-test")
 }
 
-@Test func pairedTTestReturnsNilForMismatchedPairs() {
-    let result = HypothesisTesting.pairedTTest(.vector([1, 2]), .vector([1]))
+@Test func pairedTTestReturnsNilForMismatchedPairs() throws {
+    let result = try HypothesisTesting.pairedTTest(.vector([1, 2]), .vector([1]))
 
     #expect(result == nil)
 }
@@ -114,7 +114,7 @@ import Testing
 
 @Test func oneWayANOVADetectsDifferentGroupMeans() throws {
     let result = try #require(
-        HypothesisTesting.oneWayANOVA([
+        try HypothesisTesting.oneWayANOVA([
             .vector([1, 2, 1]),
             .vector([5, 6, 5]),
             .vector([9, 10, 9]),
@@ -126,6 +126,15 @@ import Testing
     #expect(result.degreesOfFreedom?.isApproximatelyEqual(to: 2) == true)
     #expect(result.denominatorDegreesOfFreedom?.isApproximatelyEqual(to: 6) == true)
     #expect(result.effectSize ?? 0 > 0.95)
+}
+
+@Test func oneWayANOVAHandlesPerfectGroupSeparation() throws {
+    let result = try #require(try HypothesisTesting.oneWayANOVA([
+        .vector([1, 1]),
+        .vector([2, 2]),
+    ]))
+    #expect(result.statistic == .infinity)
+    #expect(result.pValue == 0)
 }
 
 @Test func mannWhitneyUDetectsSeparatedSamples() throws {

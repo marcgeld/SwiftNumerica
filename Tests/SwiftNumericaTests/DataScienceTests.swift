@@ -39,14 +39,14 @@ import TabularData
     #expect(tensor.shape.dimensions == [3, 2])
     #expect(tensor.values == [1, 2, 3, 4, 5, 6])
 
-    let summary = try #require(table.summary(for: "x"))
+    let summary = try #require(try table.summary(for: "x"))
     #expect(summary.count == 3)
     #expect(summary.min?.isApproximatelyEqual(to: 1) == true)
     #expect(summary.max?.isApproximatelyEqual(to: 5) == true)
     #expect(summary.mean?.isApproximatelyEqual(to: 3) == true)
     #expect(summary.sampleVariance?.isApproximatelyEqual(to: 4) == true)
 
-    let summaries = table.summaries()
+    let summaries = try table.summaries()
     #expect(summaries.keys.sorted() == ["x", "y"])
 }
 
@@ -66,7 +66,7 @@ import TabularData
     #expect(grouped.groups["a"]?.rowCount == 2)
     #expect(grouped.groups["b"]?.rowCount == 1)
 
-    let summaries = grouped.summaries()
+    let summaries = try grouped.summaries()
     #expect(summaries["a"]?["value"]?.mean?.isApproximatelyEqual(to: 2) == true)
     #expect(summaries["b"]?["value"]?.mean?.isApproximatelyEqual(to: 10) == true)
 }

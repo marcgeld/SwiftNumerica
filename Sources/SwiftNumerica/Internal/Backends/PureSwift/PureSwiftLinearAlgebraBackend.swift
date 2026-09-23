@@ -5,6 +5,9 @@ internal struct PureSwiftLinearAlgebraBackend: LinearAlgebraBackend {
         guard matrix.isSquare else { return nil }
         let dimension = matrix.rowCount
         var rows = matrix.rows
+        let matrixScale = rows.flatMap { $0 }.map(Swift.abs).max() ?? 0
+        guard matrixScale.isFinite else { return nil }
+        let pivotTolerance = matrixScale * 1e-12
         var sign = 1.0
         var determinant = 1.0
 
@@ -19,7 +22,7 @@ internal struct PureSwiftLinearAlgebraBackend: LinearAlgebraBackend {
                 }
             }
 
-            guard pivotMagnitude > 1e-12 else { return 0 }
+            guard pivotMagnitude > pivotTolerance else { return 0 }
             if pivotRow != column {
                 rows.swapAt(pivotRow, column)
                 sign *= -1

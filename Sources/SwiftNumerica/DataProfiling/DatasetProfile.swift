@@ -58,29 +58,29 @@ public enum DatasetProfiler {
     ///
     /// - Parameter tensor: The tensor to profile.
     /// - Returns: A dataset profile.
-    public static func profile(_ tensor: Tensor<Double>) -> DatasetProfile {
+    public static func profile(_ tensor: Tensor<Double>) throws -> DatasetProfile {
         DatasetProfile(
             summaryStatistics: .init(
-                mean: Numerica.Statistics.mean(tensor),
-                median: Numerica.Statistics.median(tensor),
-                mode: Numerica.Statistics.mode(tensor),
-                range: Numerica.Statistics.range(tensor),
-                sampleVariance: Numerica.Statistics.sampleVariance(tensor),
-                sampleStandardDeviation: Numerica.Statistics.sampleStandardDeviation(tensor)
+                mean: try Numerica.Statistics.mean(tensor),
+                median: try Numerica.Statistics.median(tensor),
+                mode: try Numerica.Statistics.mode(tensor),
+                range: try Numerica.Statistics.range(tensor),
+                sampleVariance: try Numerica.Statistics.sampleVariance(tensor),
+                sampleStandardDeviation: try Numerica.Statistics.sampleStandardDeviation(tensor)
             ),
             benfordAnalysis: Numerica.DataProfiling.benfordAnalysis(tensor),
             zipfAnalysis: Numerica.DataProfiling.zipfAnalysis(tensor),
             paretoAnalysis: Numerica.DataProfiling.paretoAnalysis(tensor),
-            normalityAnalysis: Numerica.DataProfiling.normalityAnalysis(tensor),
+            normalityAnalysis: try Numerica.DataProfiling.normalityAnalysis(tensor),
             uniformityAnalysis: Numerica.DataProfiling.uniformityAnalysis(tensor),
-            outlierAnalysis: Numerica.DataProfiling.outlierAnalysis(tensor),
-            correlationMatrix: correlationMatrix(for: tensor),
-            trendAnalysis: Numerica.DataProfiling.trendAnalysis(tensor),
+            outlierAnalysis: try Numerica.DataProfiling.outlierAnalysis(tensor),
+            correlationMatrix: try correlationMatrix(for: tensor),
+            trendAnalysis: try Numerica.DataProfiling.trendAnalysis(tensor),
             growthRateAnalysis: Numerica.DataProfiling.growthRates(tensor)
         )
     }
 
-    private static func correlationMatrix(for tensor: Tensor<Double>) -> [[Double?]]? {
+    private static func correlationMatrix(for tensor: Tensor<Double>) throws -> [[Double?]]? {
         guard tensor.rank == 2,
               tensor.shape.dimensions.count == 2,
               tensor.shape.dimensions[1] > 0 else { return nil }
@@ -93,9 +93,9 @@ public enum DatasetProfiler {
             })
         }
 
-        return columns.map { left in
-            columns.map { right in
-                Numerica.Statistics.pearsonCorrelation(left, right)
+        return try columns.map { left in
+            try columns.map { right in
+                try Numerica.Statistics.pearsonCorrelation(left, right)
             }
         }
     }

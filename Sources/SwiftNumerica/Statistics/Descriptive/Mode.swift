@@ -3,7 +3,7 @@ public extension Numerica.Statistics {
     ///
     /// - Parameter tensor: The tensor to summarize.
     /// - Returns: The modal values, or an empty array when there is no repeated mode.
-    static func mode(_ tensor: Tensor<Double>) -> [Double] {
-        (try? BackendResolver.statisticsBackend().mode(tensor)) ?? []
+    static func mode(_ tensor: Tensor<Double>) throws -> [Double] {
+        try BackendResolver.statisticsBackend().mode(tensor)
     }
 }

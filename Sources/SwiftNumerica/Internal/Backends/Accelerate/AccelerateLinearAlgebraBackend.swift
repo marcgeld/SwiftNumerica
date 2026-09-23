@@ -21,6 +21,7 @@ internal struct AccelerateLinearAlgebraBackend: LinearAlgebraBackend {
         #if canImport(Accelerate)
         let dimension = matrix.rowCount
         var factored = matrix.values
+        let tolerance = (matrix.values.map(Swift.abs).max() ?? 0) * Self.singularityTolerance
         var pivots = [Int](repeating: 0, count: dimension)
         let status = sn_dgetrf(dimension, &factored, &pivots)
         if status > 0 {
@@ -31,7 +32,7 @@ internal struct AccelerateLinearAlgebraBackend: LinearAlgebraBackend {
         var determinant = 1.0
         for index in 0..<dimension {
             let diagonal = factored[index * dimension + index]
-            guard Swift.abs(diagonal) > Self.singularityTolerance else { return 0 }
+            guard Swift.abs(diagonal) > tolerance else { return 0 }
             determinant *= diagonal
             if pivots[index] != index + 1 {
                 determinant.negate()
@@ -193,11 +194,12 @@ internal struct AccelerateLinearAlgebraBackend: LinearAlgebraBackend {
         dimension: Int
     ) -> (values: [Double], pivots: [Int])? {
         var factored = values
+        let tolerance = (values.map(Swift.abs).max() ?? 0) * Self.singularityTolerance
         var pivots = [Int](repeating: 0, count: dimension)
         guard sn_dgetrf(dimension, &factored, &pivots) == 0 else { return nil }
 
         for index in 0..<dimension
-        where Swift.abs(factored[index * dimension + index]) <= Self.singularityTolerance {
+        where Swift.abs(factored[index * dimension + index]) <= tolerance {
             return nil
         }
         return (factored, pivots)

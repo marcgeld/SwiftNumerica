@@ -5,10 +5,10 @@ public extension Numerica.Statistics {
         ///
         /// - Parameter sample: The observed sample.
         /// - Returns: A normal distribution, or `nil` for empty, non-finite, or constant data.
-        public static func fitNormal(_ sample: Tensor<Double>) -> Numerica.Probability.NormalDistribution? {
+        public static func fitNormal(_ sample: Tensor<Double>) throws -> Numerica.Probability.NormalDistribution? {
             guard finiteValues(sample) != nil,
-                  let mean = Numerica.Statistics.mean(sample),
-                  let variance = Numerica.Statistics.populationVariance(sample),
+                  let mean = try Numerica.Statistics.mean(sample),
+                  let variance = try Numerica.Statistics.populationVariance(sample),
                   variance > 0 else { return nil }
 
             return Numerica.Probability.NormalDistribution(
@@ -34,10 +34,10 @@ public extension Numerica.Statistics {
         ///
         /// - Parameter sample: The observed sample.
         /// - Returns: An exponential distribution, or `nil` when values are negative, non-finite, or mean zero.
-        public static func fitExponential(_ sample: Tensor<Double>) -> Numerica.Probability.ExponentialDistribution? {
+        public static func fitExponential(_ sample: Tensor<Double>) throws -> Numerica.Probability.ExponentialDistribution? {
             guard let values = finiteValues(sample),
                   values.allSatisfy({ $0 >= 0 }),
-                  let mean = Numerica.Statistics.mean(sample),
+                  let mean = try Numerica.Statistics.mean(sample),
                   mean > 0 else { return nil }
 
             return Numerica.Probability.ExponentialDistribution(rate: 1 / mean)

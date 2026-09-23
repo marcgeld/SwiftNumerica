@@ -37,8 +37,8 @@ public extension Numerica.Statistics {
     ///   - x: The predictor tensor.
     ///   - y: The response tensor.
     /// - Returns: A linear regression result, or `nil` when the model is undefined.
-    static func linearRegression(x: Tensor<Double>, y: Tensor<Double>) -> LinearRegressionResult? {
-        try? BackendResolver.statisticsBackend().linearRegression(x: x, y: y)
+    static func linearRegression(x: Tensor<Double>, y: Tensor<Double>) throws -> LinearRegressionResult? {
+        try BackendResolver.statisticsBackend().linearRegression(x: x, y: y)
     }
 
     /// The result of a multiple linear regression.
@@ -72,8 +72,8 @@ public extension Numerica.Statistics {
     static func multipleLinearRegression(
         features: Tensor<Double>,
         target: Tensor<Double>
-    ) -> MultipleLinearRegressionResult? {
-        try? BackendResolver.statisticsBackend().multipleLinearRegression(features: features, target: target)
+    ) throws -> MultipleLinearRegressionResult? {
+        try BackendResolver.statisticsBackend().multipleLinearRegression(features: features, target: target)
     }
 
     /// The result of a binary logistic regression.
@@ -125,8 +125,8 @@ public extension Numerica.Statistics {
         target: Tensor<Double>,
         learningRate: Double = 0.1,
         iterations: Int = 1_000
-    ) -> LogisticRegressionResult? {
-        try? BackendResolver.statisticsBackend().logisticRegression(
+    ) throws -> LogisticRegressionResult? {
+        try BackendResolver.statisticsBackend().logisticRegression(
             features: features,
             target: target,
             learningRate: learningRate,
@@ -178,8 +178,8 @@ public extension Numerica.Statistics {
         x: Tensor<Double>,
         y: Tensor<Double>,
         degree: Int
-    ) -> PolynomialRegressionResult? {
-        PolynomialRegression(degree: degree)?.fit(x, y)
+    ) throws -> PolynomialRegressionResult? {
+        try PolynomialRegression(degree: degree)?.fit(x, y)
     }
 }
 
@@ -189,8 +189,8 @@ public struct LinearRegression: Equatable, Sendable {
     public init() {}
 
     /// Fits a simple linear regression model.
-    public func fit(_ x: Tensor<Double>, _ y: Tensor<Double>) -> Numerica.Statistics.LinearRegressionResult? {
-        Numerica.Statistics.linearRegression(x: x, y: y)
+    public func fit(_ x: Tensor<Double>, _ y: Tensor<Double>) throws -> Numerica.Statistics.LinearRegressionResult? {
+        try Numerica.Statistics.linearRegression(x: x, y: y)
     }
 }
 
@@ -208,7 +208,7 @@ public struct PolynomialRegression: Equatable, Sendable {
     }
 
     /// Fits a polynomial regression model.
-    public func fit(_ x: Tensor<Double>, _ y: Tensor<Double>) -> Numerica.Statistics.PolynomialRegressionResult? {
+    public func fit(_ x: Tensor<Double>, _ y: Tensor<Double>) throws -> Numerica.Statistics.PolynomialRegressionResult? {
         guard x.rank == 1,
               y.rank == 1,
               x.count == y.count,
@@ -217,7 +217,7 @@ public struct PolynomialRegression: Equatable, Sendable {
               y.values.allSatisfy(\.isFinite) else { return nil }
 
         if degree == 0 {
-            guard let mean = Numerica.Statistics.mean(y) else { return nil }
+            guard let mean = try Numerica.Statistics.mean(y) else { return nil }
             let totalSumSquares = y.values.map { value in
                 let difference = value - mean
                 return difference * difference
@@ -229,7 +229,7 @@ public struct PolynomialRegression: Equatable, Sendable {
             (1...degree).map { power in Foundation.pow(value, Double(power)) }
         }
         guard let features = Tensor.matrix(rows),
-              let result = Numerica.Statistics.multipleLinearRegression(features: features, target: y) else {
+              let result = try Numerica.Statistics.multipleLinearRegression(features: features, target: y) else {
             return nil
         }
 
@@ -260,8 +260,8 @@ public struct LogisticRegression: Equatable, Sendable {
     public func fit(
         features: Tensor<Double>,
         target: Tensor<Double>
-    ) -> Numerica.Statistics.LogisticRegressionResult? {
-        Numerica.Statistics.logisticRegression(
+    ) throws -> Numerica.Statistics.LogisticRegressionResult? {
+        try Numerica.Statistics.logisticRegression(
             features: features,
             target: target,
             learningRate: learningRate,

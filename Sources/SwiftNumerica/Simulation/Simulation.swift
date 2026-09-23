@@ -49,7 +49,7 @@ public extension Numerica.Simulation {
         public func run<T: RandomNumberGenerator>(
             using generator: inout T,
             estimator: (inout T) -> Double
-        ) -> Result? {
+        ) throws -> Result? {
             var estimates: [Double] = []
             estimates.reserveCapacity(iterations)
 
@@ -59,11 +59,11 @@ public extension Numerica.Simulation {
                 estimates.append(estimate)
             }
 
-            return result(from: estimates)
+            return try result(from: estimates)
         }
 
         /// Runs a Monte Carlo simulation using `SystemRandomNumberGenerator`.
-        public func run(estimator: () -> Double) -> Result? {
+        public func run(estimator: () -> Double) throws -> Result? {
             var estimates: [Double] = []
             estimates.reserveCapacity(iterations)
 
@@ -73,13 +73,13 @@ public extension Numerica.Simulation {
                 estimates.append(estimate)
             }
 
-            return result(from: estimates)
+            return try result(from: estimates)
         }
 
-        private func result(from estimates: [Double]) -> Result? {
+        private func result(from estimates: [Double]) throws -> Result? {
             let tensor = Tensor.vector(estimates)
-            guard let mean = Numerica.Statistics.mean(tensor) else { return nil }
-            let variance = Numerica.Statistics.sampleVariance(tensor) ?? 0
+            guard let mean = try Numerica.Statistics.mean(tensor) else { return nil }
+            let variance = try Numerica.Statistics.sampleVariance(tensor) ?? 0
             let standardError = (variance / Double(iterations)).squareRoot()
 
             return .init(

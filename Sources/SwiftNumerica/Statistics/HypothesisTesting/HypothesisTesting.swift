@@ -90,13 +90,13 @@ public extension Numerica.Statistics {
             _ sampleB: Tensor<Double>,
             alternative: AlternativeHypothesis = .twoSided,
             confidenceLevel: Double = 0.95
-        ) -> HypothesisTestResult? {
+        ) throws -> HypothesisTestResult? {
             guard sampleA.count > 1,
                   sampleB.count > 1,
-                  let meanA = Numerica.Statistics.mean(sampleA),
-                  let meanB = Numerica.Statistics.mean(sampleB),
-                  let varianceA = Numerica.Statistics.sampleVariance(sampleA),
-                  let varianceB = Numerica.Statistics.sampleVariance(sampleB),
+                  let meanA = try Numerica.Statistics.mean(sampleA),
+                  let meanB = try Numerica.Statistics.mean(sampleB),
+                  let varianceA = try Numerica.Statistics.sampleVariance(sampleA),
+                  let varianceB = try Numerica.Statistics.sampleVariance(sampleB),
                   isValidConfidenceLevel(confidenceLevel) else { return nil }
 
             let sampleCountA = Double(sampleA.count)
@@ -149,14 +149,14 @@ public extension Numerica.Statistics {
             _ sampleB: Tensor<Double>,
             alternative: AlternativeHypothesis = .twoSided,
             confidenceLevel: Double = 0.95
-        ) -> HypothesisTestResult? {
+        ) throws -> HypothesisTestResult? {
             guard sampleA.count == sampleB.count,
                   sampleA.count > 1,
                   isValidConfidenceLevel(confidenceLevel) else { return nil }
 
             let differences = Tensor.vector(zip(sampleA.values, sampleB.values).map { $0 - $1 })
-            guard let differenceMean = Numerica.Statistics.mean(differences),
-                  let differenceStandardDeviation = Numerica.Statistics.sampleStandardDeviation(differences),
+            guard let differenceMean = try Numerica.Statistics.mean(differences),
+                  let differenceStandardDeviation = try Numerica.Statistics.sampleStandardDeviation(differences),
                   differenceStandardDeviation > 0 else { return nil }
 
             let standardError = differenceStandardDeviation / Double(differences.count).squareRoot()
@@ -243,11 +243,15 @@ public extension Numerica.Statistics {
         ///
         /// - Parameter groups: Independent samples, one tensor per group.
         /// - Returns: The test result, or `nil` when the test is undefined.
-        public static func oneWayANOVA(_ groups: [Tensor<Double>]) -> HypothesisTestResult? {
+        public static func oneWayANOVA(_ groups: [Tensor<Double>]) throws -> HypothesisTestResult? {
             guard groups.count > 1,
                   groups.allSatisfy({ !$0.values.isEmpty }) else { return nil }
 
-            let totalCount = groups.reduce(0) { $0 + $1.count }
+            let totalCount = groups.reduce(0) { partial, group in
+                let (sum, overflow) = partial.addingReportingOverflow(group.count)
+                return overflow ? Int.max : sum
+            }
+            guard totalCount != Int.max else { return nil }
             guard totalCount > groups.count else { return nil }
 
             let allValues = groups.flatMap(\.values)
@@ -257,7 +261,7 @@ public extension Numerica.Statistics {
             var withinGroupSumSquares = 0.0
 
             for group in groups {
-                guard let groupMean = Numerica.Statistics.mean(group) else { return nil }
+                guard let groupMean = try Numerica.Statistics.mean(group) else { return nil }
                 let groupDifference = groupMean - grandMean
                 betweenGroupSumSquares += Double(group.count) * groupDifference * groupDifference
                 withinGroupSumSquares += group.values.reduce(0.0) { partialResult, value in
@@ -268,10 +272,13 @@ public extension Numerica.Statistics {
 
             let betweenDegreesOfFreedom = Double(groups.count - 1)
             let withinDegreesOfFreedom = Double(totalCount - groups.count)
-            guard withinGroupSumSquares > 0 else { return nil }
+            guard withinGroupSumSquares >= 0, betweenGroupSumSquares >= 0 else { return nil }
+            if withinGroupSumSquares == 0, betweenGroupSumSquares == 0 { return nil }
 
-            let statistic = (betweenGroupSumSquares / betweenDegreesOfFreedom)
-                / (withinGroupSumSquares / withinDegreesOfFreedom)
+            let statistic = withinGroupSumSquares == 0
+                ? Double.infinity
+                : (betweenGroupSumSquares / betweenDegreesOfFreedom)
+                    / (withinGroupSumSquares / withinDegreesOfFreedom)
             let totalSumSquares = betweenGroupSumSquares + withinGroupSumSquares
 
             return .init(
@@ -462,6 +469,7 @@ public extension Numerica.Statistics {
             guard statistic >= 0,
                   numeratorDegreesOfFreedom > 0,
                   denominatorDegreesOfFreedom > 0 else { return .nan }
+            if statistic == .infinity { return 0 }
 
             let numerator = numeratorDegreesOfFreedom * statistic
             let x = numerator / (numerator + denominatorDegreesOfFreedom)

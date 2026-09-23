@@ -13,14 +13,14 @@ import Testing
 
 @Test func fftAndInverseFFTRoundTripRealSignal() throws {
     let signal = Tensor.vector([1, 0, -1, 0])
-    let spectrum = try #require(Numerica.SignalProcessing.fft(signal))
+    let spectrum = try #require(try Numerica.SignalProcessing.fft(signal))
 
     #expect(spectrum.values.count == 4)
     #expect(spectrum.values[0].real.isApproximatelyEqual(to: 0, tolerance: 1e-12))
     #expect(spectrum.values[1].real.isApproximatelyEqual(to: 2, tolerance: 1e-12))
     #expect(spectrum.values[1].imaginary.isApproximatelyEqual(to: 0, tolerance: 1e-12))
 
-    let reconstructed = try #require(Numerica.SignalProcessing.inverseFFT(spectrum))
+    let reconstructed = try #require(try Numerica.SignalProcessing.inverseFFT(spectrum))
     for (actual, expected) in zip(reconstructed.values, signal.values) {
         #expect(actual.isApproximatelyEqual(to: expected, tolerance: 1e-12))
     }
@@ -30,18 +30,18 @@ import Testing
     let signal = Tensor.vector([1, 2, 3])
     let kernel = Tensor.vector([1, 1])
 
-    let convolved = try #require(Numerica.SignalProcessing.convolve(signal, with: kernel))
+    let convolved = try #require(try Numerica.SignalProcessing.convolve(signal, with: kernel))
     #expect(convolved.values == [1, 3, 5, 3])
 
-    let correlated = try #require(Numerica.SignalProcessing.correlate(signal, with: kernel))
+    let correlated = try #require(try Numerica.SignalProcessing.correlate(signal, with: kernel))
     #expect(correlated.values == [1, 3, 5, 3])
 
-    let autocorrelation = try #require(Numerica.SignalProcessing.autocorrelation(Tensor.vector([1, 2])))
+    let autocorrelation = try #require(try Numerica.SignalProcessing.autocorrelation(Tensor.vector([1, 2])))
     #expect(autocorrelation.values == [2, 5, 2])
 }
 
 @Test func windowFunctionsProduceExpectedShapesAndValues() throws {
-    #expect(try #require(Numerica.SignalProcessing.rectangularWindow(size: 3)).values == [1, 1, 1])
+    #expect(Numerica.SignalProcessing.rectangularWindow(size: 3)?.values == [1, 1, 1])
 
     let hann = try #require(Numerica.SignalProcessing.hannWindow(size: 3))
     #expect(hann.values[0].isApproximatelyEqual(to: 0, tolerance: 1e-12))
@@ -62,12 +62,12 @@ import Testing
     )
     #expect(movingAverage.values == [1.5, 13.0 / 3.0, 14.0 / 3.0, 13.0 / 3.0, 1.5])
 
-    let detrended = try #require(Numerica.SignalProcessing.detrend(Tensor.vector([2, 4, 6, 8])))
+    let detrended = try #require(try Numerica.SignalProcessing.detrend(Tensor.vector([2, 4, 6, 8])))
     #expect(detrended.values.allSatisfy { $0.isApproximatelyEqual(to: 0, tolerance: 1e-12) })
 
-    let normalized = try #require(Numerica.SignalProcessing.normalize(Tensor.vector([1, 2, 3])))
-    #expect(try #require(normalized.mean()).isApproximatelyEqual(to: 0, tolerance: 1e-12))
-    #expect(try #require(normalized.sampleStandardDeviation()).isApproximatelyEqual(to: 1, tolerance: 1e-12))
+    let normalized = try #require(try Numerica.SignalProcessing.normalize(Tensor.vector([1, 2, 3])))
+    #expect(try #require(try normalized.mean()).isApproximatelyEqual(to: 0, tolerance: 1e-12))
+    #expect(try #require(try normalized.sampleStandardDeviation()).isApproximatelyEqual(to: 1, tolerance: 1e-12))
 }
 
 @Test func zeroCrossingRateAndPeakDetectionSummarizeSignalShape() throws {
@@ -95,17 +95,17 @@ import Testing
 @Test func signalValueStyleAPIsDelegateToNamespaceFunctions() throws {
     let signal = try #require(Signal([1, 0, -1, 0], sampleRate: 4))
 
-    #expect(try #require(signal.fft()).values.count == 4)
-    #expect(try #require(signal.movingAverage(windowSize: 3)).values.count == 4)
+    #expect(try #require(try signal.fft()).values.count == 4)
+    #expect(signal.movingAverage(windowSize: 3)?.values.count == 4)
     #expect(signal.peaks().isEmpty)
-    #expect(try #require(signal.periodogram()).values.count == 4)
+    #expect(try #require(try signal.periodogram()).values.count == 4)
 }
 
 @Test func periodogramAndSpectraExposeFrequencyDomainSummaries() throws {
     let signal = Tensor.vector([1, 0, -1, 0])
-    let periodogram = try #require(Numerica.SignalProcessing.periodogram(signal))
-    let magnitude = try #require(Numerica.SignalProcessing.magnitudeSpectrum(signal))
-    let phase = try #require(Numerica.SignalProcessing.phaseSpectrum(signal))
+    let periodogram = try #require(try Numerica.SignalProcessing.periodogram(signal))
+    let magnitude = try #require(try Numerica.SignalProcessing.magnitudeSpectrum(signal))
+    let phase = try #require(try Numerica.SignalProcessing.phaseSpectrum(signal))
 
     #expect(periodogram.values.count == 4)
     #expect(periodogram.values[1].isApproximatelyEqual(to: 1, tolerance: 1e-12))
@@ -117,7 +117,7 @@ import Testing
     let signal = Tensor.vector([0, 1, 0, -1, 0, 1, 0])
 
     let lowPass = try #require(
-        Numerica.SignalProcessing.lowPassFilter(
+        try Numerica.SignalProcessing.lowPassFilter(
             signal,
             cutoffFrequency: 1,
             sampleRate: 10,
@@ -126,7 +126,7 @@ import Testing
     #expect(lowPass.values.count == signal.count)
 
     let highPass = try #require(
-        Numerica.SignalProcessing.highPassFilter(
+        try Numerica.SignalProcessing.highPassFilter(
             signal,
             cutoffFrequency: 1,
             sampleRate: 10,
@@ -135,7 +135,7 @@ import Testing
     #expect(highPass.values.count == signal.count)
 
     let bandPass = try #require(
-        Numerica.SignalProcessing.bandPassFilter(
+        try Numerica.SignalProcessing.bandPassFilter(
             signal,
             lowCutoffFrequency: 1,
             highCutoffFrequency: 2,
@@ -145,7 +145,7 @@ import Testing
     #expect(bandPass.values.count == signal.count)
 
     let bandStop = try #require(
-        Numerica.SignalProcessing.bandStopFilter(
+        try Numerica.SignalProcessing.bandStopFilter(
             signal,
             lowCutoffFrequency: 1,
             highCutoffFrequency: 2,
@@ -153,7 +153,7 @@ import Testing
             filterLength: 5
         ))
     #expect(bandStop.values.count == signal.count)
-    #expect(Numerica.SignalProcessing.lowPassFilter(signal, cutoffFrequency: 10, sampleRate: 10) == nil)
+    try #expect(Numerica.SignalProcessing.lowPassFilter(signal, cutoffFrequency: 10, sampleRate: 10) == nil)
 }
 
 @Test func biquadFilterAppliesDirectFormDifferenceEquation() throws {
@@ -195,7 +195,7 @@ private func naiveDFT(_ values: [Double]) -> [(real: Double, imaginary: Double)]
 
     for count in [1, 2, 3, 4, 5, 7, 8, 12, 16, 31, 97, 128] {
         let values = (0..<count).map { _ in generator.nextUnit() }
-        let spectrum = try #require(Numerica.SignalProcessing.fft(Tensor.vector(values)))
+        let spectrum = try #require(try Numerica.SignalProcessing.fft(Tensor.vector(values)))
         let expected = naiveDFT(values)
 
         for frequency in 0..<count {
@@ -214,8 +214,8 @@ private func naiveDFT(_ values: [Double]) -> [(real: Double, imaginary: Double)]
 
     for count in [1, 3, 4, 7, 12, 45, 64, 100] {
         let values = (0..<count).map { _ in generator.nextUnit() }
-        let spectrum = try #require(Numerica.SignalProcessing.fft(Tensor.vector(values)))
-        let reconstructed = try #require(Numerica.SignalProcessing.inverseFFT(spectrum))
+        let spectrum = try #require(try Numerica.SignalProcessing.fft(Tensor.vector(values)))
+        let reconstructed = try #require(try Numerica.SignalProcessing.inverseFFT(spectrum))
 
         for index in 0..<count {
             #expect(reconstructed.values[index].isApproximatelyEqual(to: values[index], tolerance: 1e-9))

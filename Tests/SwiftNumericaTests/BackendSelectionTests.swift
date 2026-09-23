@@ -10,16 +10,34 @@ struct BackendSelectionTests {
 
     @Test func pureSwiftBackendProducesCorrectResults() throws {
         Numerica.configuration.backend = .pureSwift
-        let mean = try #require(Numerica.Statistics.mean(.vector([1, 2, 3, 4])))
+        let mean = try #require(try Numerica.Statistics.mean(.vector([1, 2, 3, 4])))
         #expect(mean.isApproximatelyEqual(to: 2.5))
-        #expect(Numerica.Combinatorics.combinations(n: 10, r: 3) == 120)
+        try #expect(Numerica.Combinatorics.combinations(n: 10, r: 3) == 120)
+    }
+
+    @Test func throwingMeanPropagatesUnavailableBackend() throws {
+        guard !ComputeBackend.accelerate.isAvailable else { return }
+        Numerica.configuration.backend = .accelerate
+        defer { Numerica.configuration.backend = .automatic }
+        #expect(throws: BackendError.unavailable(.accelerate)) {
+            try Numerica.Statistics.mean(.vector([1, 2, 3]))
+        }
+        #expect(throws: BackendError.unavailable(.accelerate)) {
+            try Numerica.Combinatorics.factorial(5)
+        }
+        #expect(throws: BackendError.unavailable(.accelerate)) {
+            try Numerica.LinearAlgebra.determinant(Matrix([[1, 0], [0, 1]])!)
+        }
+        #expect(throws: BackendError.unavailable(.accelerate)) {
+            try Numerica.SignalProcessing.fft(.vector([1, 2, 3]))
+        }
     }
 
     @Test func automaticBackendProducesReferenceResults() throws {
         Numerica.configuration.backend = .automatic
         let resolved = try Numerica.resolvedBackend()
         #expect(resolved == (ComputeBackend.accelerate.isAvailable ? .accelerate : .pureSwift))
-        let variance = try #require(Numerica.Statistics.populationVariance(.vector([2, 4, 4, 4, 5, 5, 7, 9])))
+        let variance = try #require(try Numerica.Statistics.populationVariance(.vector([2, 4, 4, 4, 5, 5, 7, 9])))
         #expect(variance.isApproximatelyEqual(to: 4))
     }
 
@@ -27,12 +45,12 @@ struct BackendSelectionTests {
         let tensor = Tensor.vector([2, 4, 4, 4, 5, 5, 7, 9])
 
         Numerica.configuration.backend = .pureSwift
-        let pureMean = try #require(Numerica.Statistics.mean(tensor))
-        let pureVariance = try #require(Numerica.Statistics.populationVariance(tensor))
+        let pureMean = try #require(try Numerica.Statistics.mean(tensor))
+        let pureVariance = try #require(try Numerica.Statistics.populationVariance(tensor))
 
         Numerica.configuration.backend = .accelerate
-        let accelerateMean = try #require(Numerica.Statistics.mean(tensor))
-        let accelerateVariance = try #require(Numerica.Statistics.populationVariance(tensor))
+        let accelerateMean = try #require(try Numerica.Statistics.mean(tensor))
+        let accelerateVariance = try #require(try Numerica.Statistics.populationVariance(tensor))
 
         #expect(accelerateMean.isApproximatelyEqual(to: pureMean))
         #expect(accelerateVariance.isApproximatelyEqual(to: pureVariance))
@@ -43,28 +61,28 @@ struct BackendSelectionTests {
         let tensor = Tensor.vector([2, 4, 4, 4, 5, 5, 7, 9])
 
         Numerica.configuration.backend = .pureSwift
-        let pureSum = try #require(Numerica.Statistics.sum(tensor))
-        let pureMin = try #require(Numerica.Statistics.min(tensor))
-        let pureMax = try #require(Numerica.Statistics.max(tensor))
-        let pureRange = try #require(Numerica.Statistics.range(tensor))
-        let purePopulationVariance = try #require(Numerica.Statistics.populationVariance(tensor))
-        let pureSampleVariance = try #require(Numerica.Statistics.sampleVariance(tensor))
+        let pureSum = try #require(try Numerica.Statistics.sum(tensor))
+        let pureMin = try #require(try Numerica.Statistics.min(tensor))
+        let pureMax = try #require(try Numerica.Statistics.max(tensor))
+        let pureRange = try #require(try Numerica.Statistics.range(tensor))
+        let purePopulationVariance = try #require(try Numerica.Statistics.populationVariance(tensor))
+        let pureSampleVariance = try #require(try Numerica.Statistics.sampleVariance(tensor))
         let purePopulationStandardDeviation = try #require(
-            Numerica.Statistics.populationStandardDeviation(tensor))
+            try Numerica.Statistics.populationStandardDeviation(tensor))
         let pureSampleStandardDeviation = try #require(
-            Numerica.Statistics.sampleStandardDeviation(tensor))
+            try Numerica.Statistics.sampleStandardDeviation(tensor))
 
         Numerica.configuration.backend = .accelerate
-        let accelerateSum = try #require(Numerica.Statistics.sum(tensor))
-        let accelerateMin = try #require(Numerica.Statistics.min(tensor))
-        let accelerateMax = try #require(Numerica.Statistics.max(tensor))
-        let accelerateRange = try #require(Numerica.Statistics.range(tensor))
-        let acceleratePopulationVariance = try #require(Numerica.Statistics.populationVariance(tensor))
-        let accelerateSampleVariance = try #require(Numerica.Statistics.sampleVariance(tensor))
+        let accelerateSum = try #require(try Numerica.Statistics.sum(tensor))
+        let accelerateMin = try #require(try Numerica.Statistics.min(tensor))
+        let accelerateMax = try #require(try Numerica.Statistics.max(tensor))
+        let accelerateRange = try #require(try Numerica.Statistics.range(tensor))
+        let acceleratePopulationVariance = try #require(try Numerica.Statistics.populationVariance(tensor))
+        let accelerateSampleVariance = try #require(try Numerica.Statistics.sampleVariance(tensor))
         let acceleratePopulationStandardDeviation = try #require(
-            Numerica.Statistics.populationStandardDeviation(tensor))
+            try Numerica.Statistics.populationStandardDeviation(tensor))
         let accelerateSampleStandardDeviation = try #require(
-            Numerica.Statistics.sampleStandardDeviation(tensor))
+            try Numerica.Statistics.sampleStandardDeviation(tensor))
 
         #expect(accelerateSum.isApproximatelyEqual(to: pureSum))
         #expect(accelerateMin.isApproximatelyEqual(to: pureMin))
@@ -80,12 +98,12 @@ struct BackendSelectionTests {
         let tensor = Tensor.vector([1, 2, 2, 3, 5, 8, 13])
 
         Numerica.configuration.backend = .pureSwift
-        let pureSkewness = try #require(Numerica.Statistics.skewness(tensor))
-        let pureKurtosis = try #require(Numerica.Statistics.kurtosis(tensor))
+        let pureSkewness = try #require(try Numerica.Statistics.skewness(tensor))
+        let pureKurtosis = try #require(try Numerica.Statistics.kurtosis(tensor))
 
         Numerica.configuration.backend = .accelerate
-        let accelerateSkewness = try #require(Numerica.Statistics.skewness(tensor))
-        let accelerateKurtosis = try #require(Numerica.Statistics.kurtosis(tensor))
+        let accelerateSkewness = try #require(try Numerica.Statistics.skewness(tensor))
+        let accelerateKurtosis = try #require(try Numerica.Statistics.kurtosis(tensor))
 
         #expect(accelerateSkewness.isApproximatelyEqual(to: pureSkewness))
         #expect(accelerateKurtosis.isApproximatelyEqual(to: pureKurtosis))
@@ -96,16 +114,16 @@ struct BackendSelectionTests {
         let y = Tensor.vector([2, 5, 7, 11, 17, 26])
 
         Numerica.configuration.backend = .pureSwift
-        let pureCorrelation = try #require(Numerica.Statistics.pearsonCorrelation(x, y))
-        let purePopulationCovariance = try #require(Numerica.Statistics.populationCovariance(x, y))
-        let pureSampleCovariance = try #require(Numerica.Statistics.sampleCovariance(x, y))
-        let pureRegression = try #require(Numerica.Statistics.linearRegression(x: x, y: y))
+        let pureCorrelation = try #require(try Numerica.Statistics.pearsonCorrelation(x, y))
+        let purePopulationCovariance = try #require(try Numerica.Statistics.populationCovariance(x, y))
+        let pureSampleCovariance = try #require(try Numerica.Statistics.sampleCovariance(x, y))
+        let pureRegression = try #require(try Numerica.Statistics.linearRegression(x: x, y: y))
 
         Numerica.configuration.backend = .accelerate
-        let accelerateCorrelation = try #require(Numerica.Statistics.pearsonCorrelation(x, y))
-        let acceleratePopulationCovariance = try #require(Numerica.Statistics.populationCovariance(x, y))
-        let accelerateSampleCovariance = try #require(Numerica.Statistics.sampleCovariance(x, y))
-        let accelerateRegression = try #require(Numerica.Statistics.linearRegression(x: x, y: y))
+        let accelerateCorrelation = try #require(try Numerica.Statistics.pearsonCorrelation(x, y))
+        let acceleratePopulationCovariance = try #require(try Numerica.Statistics.populationCovariance(x, y))
+        let accelerateSampleCovariance = try #require(try Numerica.Statistics.sampleCovariance(x, y))
+        let accelerateRegression = try #require(try Numerica.Statistics.linearRegression(x: x, y: y))
 
         #expect(accelerateCorrelation.isApproximatelyEqual(to: pureCorrelation))
         #expect(acceleratePopulationCovariance.isApproximatelyEqual(to: purePopulationCovariance))
@@ -120,19 +138,19 @@ struct BackendSelectionTests {
         let oddTensor = Tensor.vector([3, 1, 4, 1, 5, 9, 2])
 
         Numerica.configuration.backend = .pureSwift
-        let pureEvenMedian = try #require(Numerica.Statistics.median(evenTensor))
-        let pureOddMedian = try #require(Numerica.Statistics.median(oddTensor))
-        let pureQuantile = try #require(Numerica.Statistics.quantile(evenTensor, probability: 0.35))
-        let purePercentile = try #require(Numerica.Statistics.percentile(evenTensor, percentile: 90))
-        let pureInterquartileRange = try #require(Numerica.Statistics.interquartileRange(evenTensor))
+        let pureEvenMedian = try #require(try Numerica.Statistics.median(evenTensor))
+        let pureOddMedian = try #require(try Numerica.Statistics.median(oddTensor))
+        let pureQuantile = try #require(try Numerica.Statistics.quantile(evenTensor, probability: 0.35))
+        let purePercentile = try #require(try Numerica.Statistics.percentile(evenTensor, percentile: 90))
+        let pureInterquartileRange = try #require(try Numerica.Statistics.interquartileRange(evenTensor))
 
         Numerica.configuration.backend = .accelerate
-        let accelerateEvenMedian = try #require(Numerica.Statistics.median(evenTensor))
-        let accelerateOddMedian = try #require(Numerica.Statistics.median(oddTensor))
-        let accelerateQuantile = try #require(Numerica.Statistics.quantile(evenTensor, probability: 0.35))
-        let acceleratePercentile = try #require(Numerica.Statistics.percentile(evenTensor, percentile: 90))
+        let accelerateEvenMedian = try #require(try Numerica.Statistics.median(evenTensor))
+        let accelerateOddMedian = try #require(try Numerica.Statistics.median(oddTensor))
+        let accelerateQuantile = try #require(try Numerica.Statistics.quantile(evenTensor, probability: 0.35))
+        let acceleratePercentile = try #require(try Numerica.Statistics.percentile(evenTensor, percentile: 90))
         let accelerateInterquartileRange = try #require(
-            Numerica.Statistics.interquartileRange(evenTensor))
+            try Numerica.Statistics.interquartileRange(evenTensor))
 
         #expect(accelerateEvenMedian.isApproximatelyEqual(to: pureEvenMedian))
         #expect(accelerateOddMedian.isApproximatelyEqual(to: pureOddMedian))
@@ -146,10 +164,10 @@ struct BackendSelectionTests {
         let y = Tensor.vector([2, 1, 4, 3, 7, 12, 11, 20])
 
         Numerica.configuration.backend = .pureSwift
-        let pureSpearman = try #require(Numerica.Statistics.spearmanCorrelation(x, y))
+        let pureSpearman = try #require(try Numerica.Statistics.spearmanCorrelation(x, y))
 
         Numerica.configuration.backend = .accelerate
-        let accelerateSpearman = try #require(Numerica.Statistics.spearmanCorrelation(x, y))
+        let accelerateSpearman = try #require(try Numerica.Statistics.spearmanCorrelation(x, y))
 
         #expect(accelerateSpearman.isApproximatelyEqual(to: pureSpearman))
     }
@@ -161,11 +179,11 @@ struct BackendSelectionTests {
 
         Numerica.configuration.backend = .pureSwift
         let pureModel = try #require(
-            Numerica.Statistics.multipleLinearRegression(features: features, target: target))
+            try Numerica.Statistics.multipleLinearRegression(features: features, target: target))
 
         Numerica.configuration.backend = .accelerate
         let accelerateModel = try #require(
-            Numerica.Statistics.multipleLinearRegression(features: features, target: target))
+            try Numerica.Statistics.multipleLinearRegression(features: features, target: target))
 
         #expect(accelerateModel.coefficients.count == pureModel.coefficients.count)
         for (accelerateCoefficient, pureCoefficient) in zip(
@@ -183,12 +201,12 @@ struct BackendSelectionTests {
 
         Numerica.configuration.backend = .pureSwift
         let pureModel = try #require(
-            Numerica.Statistics.logisticRegression(
+            try Numerica.Statistics.logisticRegression(
                 features: features, target: target, learningRate: 0.5, iterations: 500))
 
         Numerica.configuration.backend = .accelerate
         let accelerateModel = try #require(
-            Numerica.Statistics.logisticRegression(
+            try Numerica.Statistics.logisticRegression(
                 features: features, target: target, learningRate: 0.5, iterations: 500))
 
         #expect(accelerateModel.coefficients.count == pureModel.coefficients.count)
@@ -208,13 +226,13 @@ struct BackendSelectionTests {
             let signal = Tensor.vector(values)
 
             Numerica.configuration.backend = .pureSwift
-            let pureSpectrum = try #require(Numerica.SignalProcessing.fft(signal))
-            let pureRoundTrip = try #require(Numerica.SignalProcessing.inverseFFT(pureSpectrum))
+            let pureSpectrum = try #require(try Numerica.SignalProcessing.fft(signal))
+            let pureRoundTrip = try #require(try Numerica.SignalProcessing.inverseFFT(pureSpectrum))
 
             Numerica.configuration.backend = .accelerate
-            let accelerateSpectrum = try #require(Numerica.SignalProcessing.fft(signal))
+            let accelerateSpectrum = try #require(try Numerica.SignalProcessing.fft(signal))
             let accelerateRoundTrip = try #require(
-                Numerica.SignalProcessing.inverseFFT(accelerateSpectrum))
+                try Numerica.SignalProcessing.inverseFFT(accelerateSpectrum))
 
             for index in 0..<count {
                 #expect(
@@ -238,17 +256,17 @@ struct BackendSelectionTests {
         let singular = try #require(Matrix([[1, 2], [2, 4]]))
 
         Numerica.configuration.backend = .pureSwift
-        let pureDeterminant = try #require(Numerica.LinearAlgebra.determinant(matrix))
-        let pureInverse = try #require(Numerica.LinearAlgebra.inverse(matrix))
-        let pureSolution = try #require(Numerica.LinearAlgebra.solve(matrix, vector))
-        let pureEigenvalues = try #require(Numerica.LinearAlgebra.eigenvalues(symmetric))
+        let pureDeterminant = try #require(try Numerica.LinearAlgebra.determinant(matrix))
+        let pureInverse = try #require(try Numerica.LinearAlgebra.inverse(matrix))
+        let pureSolution = try #require(try Numerica.LinearAlgebra.solve(matrix, vector))
+        let pureEigenvalues = try #require(try Numerica.LinearAlgebra.eigenvalues(symmetric))
 
         Numerica.configuration.backend = .accelerate
-        let accelerateDeterminant = try #require(Numerica.LinearAlgebra.determinant(matrix))
-        let accelerateInverse = try #require(Numerica.LinearAlgebra.inverse(matrix))
-        let accelerateSolution = try #require(Numerica.LinearAlgebra.solve(matrix, vector))
-        let accelerateEigenvalues = try #require(Numerica.LinearAlgebra.eigenvalues(symmetric))
-        let accelerateEigenvectors = try #require(Numerica.LinearAlgebra.eigenvectors(symmetric))
+        let accelerateDeterminant = try #require(try Numerica.LinearAlgebra.determinant(matrix))
+        let accelerateInverse = try #require(try Numerica.LinearAlgebra.inverse(matrix))
+        let accelerateSolution = try #require(try Numerica.LinearAlgebra.solve(matrix, vector))
+        let accelerateEigenvalues = try #require(try Numerica.LinearAlgebra.eigenvalues(symmetric))
+        let accelerateEigenvectors = try #require(try Numerica.LinearAlgebra.eigenvectors(symmetric))
 
         #expect(accelerateDeterminant.isApproximatelyEqual(to: pureDeterminant, tolerance: 1e-9))
         for row in 0..<matrix.rowCount {
@@ -289,10 +307,10 @@ struct BackendSelectionTests {
         }
 
         // Singular and non-symmetric inputs keep the reference semantics.
-        #expect(try #require(Numerica.LinearAlgebra.determinant(singular)).isApproximatelyEqual(to: 0))
-        #expect(Numerica.LinearAlgebra.inverse(singular) == nil)
-        #expect(Numerica.LinearAlgebra.solve(singular, Vector([1, 2])) == nil)
-        #expect(Numerica.LinearAlgebra.eigenvalues(matrix) == nil)
+        #expect(try #require(try Numerica.LinearAlgebra.determinant(singular)).isApproximatelyEqual(to: 0))
+        try #expect(Numerica.LinearAlgebra.inverse(singular) == nil)
+        try #expect(Numerica.LinearAlgebra.solve(singular, Vector([1, 2])) == nil)
+        try #expect(Numerica.LinearAlgebra.eigenvalues(matrix) == nil)
     }
 
     @Test func pureSwiftAndAccelerateCholeskyAndMatrixSolveAreEquivalent() throws {
@@ -301,14 +319,14 @@ struct BackendSelectionTests {
         let rightHandSide = try #require(Matrix([[1, 0], [0, 2], [3, 1]]))
 
         Numerica.configuration.backend = .pureSwift
-        let pureFactor = try #require(Numerica.LinearAlgebra.choleskyDecomposition(symmetric))
-        let pureLogDeterminant = try #require(Numerica.LinearAlgebra.logDeterminant(symmetric))
-        let pureSolution = try #require(Numerica.LinearAlgebra.solve(matrix, rightHandSide))
+        let pureFactor = try #require(try Numerica.LinearAlgebra.choleskyDecomposition(symmetric))
+        let pureLogDeterminant = try #require(try Numerica.LinearAlgebra.logDeterminant(symmetric))
+        let pureSolution = try #require(try Numerica.LinearAlgebra.solve(matrix, rightHandSide))
 
         Numerica.configuration.backend = .accelerate
-        let accelerateFactor = try #require(Numerica.LinearAlgebra.choleskyDecomposition(symmetric))
-        let accelerateLogDeterminant = try #require(Numerica.LinearAlgebra.logDeterminant(symmetric))
-        let accelerateSolution = try #require(Numerica.LinearAlgebra.solve(matrix, rightHandSide))
+        let accelerateFactor = try #require(try Numerica.LinearAlgebra.choleskyDecomposition(symmetric))
+        let accelerateLogDeterminant = try #require(try Numerica.LinearAlgebra.logDeterminant(symmetric))
+        let accelerateSolution = try #require(try Numerica.LinearAlgebra.solve(matrix, rightHandSide))
 
         for row in 0..<symmetric.rowCount {
             for column in 0..<symmetric.columnCount {
@@ -328,9 +346,9 @@ struct BackendSelectionTests {
 
         // Both backends reject non-SPD input the same way.
         let indefinite = try #require(Matrix([[1, 0], [0, -1]]))
-        #expect(Numerica.LinearAlgebra.choleskyDecomposition(indefinite) == nil)
+        try #expect(Numerica.LinearAlgebra.choleskyDecomposition(indefinite) == nil)
         Numerica.configuration.backend = .pureSwift
-        #expect(Numerica.LinearAlgebra.choleskyDecomposition(indefinite) == nil)
+        try #expect(Numerica.LinearAlgebra.choleskyDecomposition(indefinite) == nil)
     }
 
     @Test func pureSwiftAndAccelerateConvolutionIsEquivalent() throws {
@@ -338,14 +356,14 @@ struct BackendSelectionTests {
         let kernel = Tensor.vector([2, -1, 0.5])
 
         Numerica.configuration.backend = .pureSwift
-        let pureConvolved = try #require(Numerica.SignalProcessing.convolve(signal, with: kernel))
-        let pureCorrelated = try #require(Numerica.SignalProcessing.correlate(signal, with: kernel))
+        let pureConvolved = try #require(try Numerica.SignalProcessing.convolve(signal, with: kernel))
+        let pureCorrelated = try #require(try Numerica.SignalProcessing.correlate(signal, with: kernel))
 
         Numerica.configuration.backend = .accelerate
         let accelerateConvolved = try #require(
-            Numerica.SignalProcessing.convolve(signal, with: kernel))
+            try Numerica.SignalProcessing.convolve(signal, with: kernel))
         let accelerateCorrelated = try #require(
-            Numerica.SignalProcessing.correlate(signal, with: kernel))
+            try Numerica.SignalProcessing.correlate(signal, with: kernel))
 
         #expect(pureConvolved.values.count == accelerateConvolved.values.count)
         for index in pureConvolved.values.indices {
@@ -363,10 +381,10 @@ struct BackendSelectionTests {
         let tensor = Tensor.vector([2, 4, 4, 4, 5, 5, 7, 9].map { $0 + offset })
 
         Numerica.configuration.backend = .pureSwift
-        let pureVariance = try #require(Numerica.Statistics.populationVariance(tensor))
+        let pureVariance = try #require(try Numerica.Statistics.populationVariance(tensor))
 
         Numerica.configuration.backend = .accelerate
-        let accelerateVariance = try #require(Numerica.Statistics.populationVariance(tensor))
+        let accelerateVariance = try #require(try Numerica.Statistics.populationVariance(tensor))
 
         #expect(pureVariance.isApproximatelyEqual(to: 4, tolerance: 1e-6))
         #expect(accelerateVariance.isApproximatelyEqual(to: 4, tolerance: 1e-6))

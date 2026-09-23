@@ -1,7 +1,7 @@
 /// A convenience value type for two-dimensional numerical tensors.
 public struct Matrix: Equatable, Sendable {
     /// The underlying tensor storage.
-    public var tensor: Tensor<Double>
+    public let tensor: Tensor<Double>
 
     /// The matrix values in row-major storage order.
     public var values: [Double] {
@@ -44,6 +44,7 @@ public struct Matrix: Equatable, Sendable {
     public init?(values: [Double], rows: Int, columns: Int) {
         guard rows > 0,
               columns > 0,
+              rows.multipliedReportingOverflow(by: columns).overflow == false,
               values.count == rows * columns,
               let shape = Shape([rows, columns]),
               let tensor = Tensor<Double>(values, shape: shape) else { return nil }

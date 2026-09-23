@@ -105,18 +105,20 @@ public extension Numerica.DataScience {
         }
 
         /// Produces summary statistics for a numeric column.
-        public func summary(for column: String) -> ColumnSummary? {
+        public func summary(for column: String) throws -> ColumnSummary? {
             guard let tensor = numericColumn(column) else { return nil }
-            return ColumnSummary(column: column, tensor: tensor)
+            return try ColumnSummary(column: column, tensor: tensor)
         }
 
         /// Produces summary statistics for every fully numeric column.
-        public func summaries() -> [String: ColumnSummary] {
-            columns.reduce(into: [:]) { result, column in
-                if let summary = summary(for: column) {
+        public func summaries() throws -> [String: ColumnSummary] {
+            var result: [String: ColumnSummary] = [:]
+            for column in columns {
+                if let summary = try summary(for: column) {
                     result[column] = summary
                 }
             }
+            return result
         }
 
         /// Groups rows by a column.
@@ -219,16 +221,16 @@ public extension Numerica.DataScience {
             self.sampleStandardDeviation = sampleStandardDeviation
         }
 
-        fileprivate init(column: String, tensor: Tensor<Double>) {
+        fileprivate init(column: String, tensor: Tensor<Double>) throws {
             self.init(
                 column: column,
                 count: tensor.count,
-                min: Numerica.Statistics.min(tensor),
-                max: Numerica.Statistics.max(tensor),
-                mean: Numerica.Statistics.mean(tensor),
-                median: Numerica.Statistics.median(tensor),
-                sampleVariance: Numerica.Statistics.sampleVariance(tensor),
-                sampleStandardDeviation: Numerica.Statistics.sampleStandardDeviation(tensor)
+                min: try Numerica.Statistics.min(tensor),
+                max: try Numerica.Statistics.max(tensor),
+                mean: try Numerica.Statistics.mean(tensor),
+                median: try Numerica.Statistics.median(tensor),
+                sampleVariance: try Numerica.Statistics.sampleVariance(tensor),
+                sampleStandardDeviation: try Numerica.Statistics.sampleStandardDeviation(tensor)
             )
         }
     }
@@ -253,8 +255,8 @@ public extension Numerica.DataScience {
         }
 
         /// Summary statistics for each group's numeric columns.
-        public func summaries() -> [String: [String: ColumnSummary]] {
-            groups.mapValues { $0.summaries() }
+        public func summaries() throws -> [String: [String: ColumnSummary]] {
+            try groups.mapValues { try $0.summaries() }
         }
     }
 }

@@ -1,4 +1,5 @@
 internal enum LinearSystemMath {
+    private static let relativePivotTolerance = 1e-12
     /// Solves `matrix * x = vector` with Gaussian elimination and partial
     /// pivoting. Returns `nil` when the system is singular within a `1e-12`
     /// pivot tolerance.
@@ -10,6 +11,9 @@ internal enum LinearSystemMath {
         var augmented = matrix.enumerated().map { rowIndex, row in
             row + [vector[rowIndex]]
         }
+        let matrixScale = matrix.flatMap { $0 }.map(Swift.abs).max() ?? 0
+        guard matrixScale.isFinite, matrixScale > 0 else { return nil }
+        let pivotTolerance = matrixScale * relativePivotTolerance
 
         for column in 0..<dimension {
             var pivotRow = column
@@ -22,7 +26,7 @@ internal enum LinearSystemMath {
                 }
             }
 
-            guard pivotMagnitude > 1e-12 else { return nil }
+            guard pivotMagnitude > pivotTolerance else { return nil }
             if pivotRow != column {
                 augmented.swapAt(pivotRow, column)
             }
@@ -56,6 +60,9 @@ internal enum LinearSystemMath {
         var augmented = matrix.enumerated().map { rowIndex, row in
             row + (0..<dimension).map { $0 == rowIndex ? 1.0 : 0.0 }
         }
+        let matrixScale = matrix.flatMap { $0 }.map(Swift.abs).max() ?? 0
+        guard matrixScale.isFinite, matrixScale > 0 else { return nil }
+        let pivotTolerance = matrixScale * relativePivotTolerance
 
         for column in 0..<dimension {
             var pivotRow = column
@@ -68,7 +75,7 @@ internal enum LinearSystemMath {
                 }
             }
 
-            guard pivotMagnitude > 1e-12 else { return nil }
+            guard pivotMagnitude > pivotTolerance else { return nil }
             if pivotRow != column {
                 augmented.swapAt(pivotRow, column)
             }

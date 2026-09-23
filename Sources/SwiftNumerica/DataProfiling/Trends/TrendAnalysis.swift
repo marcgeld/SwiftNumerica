@@ -12,9 +12,9 @@ public extension Numerica.DataProfiling {
     ///
     /// - Parameter tensor: The tensor to analyze.
     /// - Returns: Trend analysis, or `nil` when regression is undefined.
-    static func trendAnalysis(_ tensor: Tensor<Double>) -> TrendAnalysis? {
+    static func trendAnalysis(_ tensor: Tensor<Double>) throws -> TrendAnalysis? {
         let x = Tensor.vector(tensor.values.indices.map(Double.init))
-        guard let regression = Numerica.Statistics.linearRegression(x: x, y: tensor) else { return nil }
+        guard let regression = try Numerica.Statistics.linearRegression(x: x, y: tensor) else { return nil }
         return .init(regression: regression, isIncreasing: regression.slope > 0)
     }
 

@@ -18,11 +18,11 @@ import Testing
     #expect(result.standardError.isApproximatelyEqual(to: (5.0 / 12.0).squareRoot()))
 }
 
-@Test func monteCarloSimulationRejectsInvalidInputs() {
+@Test func monteCarloSimulationRejectsInvalidInputs() throws {
     #expect(MonteCarloSimulation(iterations: 0) == nil)
 
     let simulation = MonteCarloSimulation(iterations: 1)
-    #expect(simulation?.run { Double.nan } == nil)
+    try #expect(simulation?.run { Double.nan } == nil)
 }
 
 @Test func randomWalkBuildsPathFromIncrements() throws {

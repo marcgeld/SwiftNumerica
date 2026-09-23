@@ -1,7 +1,7 @@
 /// A convenience value type for one-dimensional numerical tensors.
 public struct Vector: Equatable, Sendable {
     /// The underlying tensor storage.
-    public var tensor: Tensor<Double>
+    public let tensor: Tensor<Double>
 
     /// The vector values.
     public var values: [Double] {

@@ -21,11 +21,11 @@ public extension Numerica.DataProfiling {
     ///
     /// - Parameter tensor: The tensor to analyze.
     /// - Returns: Normality analysis, or `nil` when required statistics are undefined.
-    static func normalityAnalysis(_ tensor: Tensor<Double>) -> NormalityAnalysis? {
-        guard let mean = Numerica.Statistics.mean(tensor),
-              let standardDeviation = Numerica.Statistics.sampleStandardDeviation(tensor),
-              let skewness = Numerica.Statistics.skewness(tensor),
-              let kurtosis = Numerica.Statistics.kurtosis(tensor) else { return nil }
+    static func normalityAnalysis(_ tensor: Tensor<Double>) throws -> NormalityAnalysis? {
+        guard let mean = try Numerica.Statistics.mean(tensor),
+              let standardDeviation = try Numerica.Statistics.sampleStandardDeviation(tensor),
+              let skewness = try Numerica.Statistics.skewness(tensor),
+              let kurtosis = try Numerica.Statistics.kurtosis(tensor) else { return nil }
         return .init(
             mean: mean,
             standardDeviation: standardDeviation,

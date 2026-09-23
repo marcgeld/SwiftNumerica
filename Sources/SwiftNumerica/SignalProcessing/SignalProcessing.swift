@@ -112,8 +112,8 @@ public extension Numerica.SignalProcessing {
         }
 
         /// Computes the discrete Fourier transform.
-        public func fft() -> Tensor<ComplexNumber>? {
-            Numerica.SignalProcessing.fft(samples)
+        public func fft() throws -> Tensor<ComplexNumber>? {
+            try Numerica.SignalProcessing.fft(samples)
         }
 
         /// Smooths the signal with a centered moving average.
@@ -123,14 +123,14 @@ public extension Numerica.SignalProcessing {
         }
 
         /// Removes the least-squares linear trend from the signal.
-        public func detrended() -> Signal? {
-            Numerica.SignalProcessing.detrend(samples)
+        public func detrended() throws -> Signal? {
+            try Numerica.SignalProcessing.detrend(samples)
                 .flatMap { Signal(samples: $0, sampleRate: sampleRate) }
         }
 
         /// Normalizes the signal to zero mean and unit sample standard deviation.
-        public func normalized() -> Signal? {
-            Numerica.SignalProcessing.normalize(samples)
+        public func normalized() throws -> Signal? {
+            try Numerica.SignalProcessing.normalize(samples)
                 .flatMap { Signal(samples: $0, sampleRate: sampleRate) }
         }
 
@@ -140,42 +140,42 @@ public extension Numerica.SignalProcessing {
         }
 
         /// Computes the periodogram.
-        public func periodogram() -> Tensor<Double>? {
-            Numerica.SignalProcessing.periodogram(samples)
+        public func periodogram() throws -> Tensor<Double>? {
+            try Numerica.SignalProcessing.periodogram(samples)
         }
     }
 
     /// Computes the discrete Fourier transform in O(n log n) for any length.
-    static func fft(_ signal: Tensor<Double>) -> Tensor<ComplexNumber>? {
-        guard isFiniteVector(signal), signal.count > 0,
-              let backend = try? BackendResolver.signalProcessingBackend() else { return nil }
+    static func fft(_ signal: Tensor<Double>) throws -> Tensor<ComplexNumber>? {
+        guard isFiniteVector(signal), signal.count > 0 else { return nil }
+        let backend = try BackendResolver.signalProcessingBackend()
         return complexVector(backend.fft(signal.values))
     }
 
     /// Computes the inverse discrete Fourier transform and returns the real component.
-    static func inverseFFT(_ spectrum: Tensor<ComplexNumber>) -> Tensor<Double>? {
-        guard spectrum.rank == 1, spectrum.count > 0,
-              let backend = try? BackendResolver.signalProcessingBackend() else { return nil }
+    static func inverseFFT(_ spectrum: Tensor<ComplexNumber>) throws -> Tensor<Double>? {
+        guard spectrum.rank == 1, spectrum.count > 0 else { return nil }
+        let backend = try BackendResolver.signalProcessingBackend()
         return .vector(backend.inverseFFT(spectrum.values))
     }
 
     /// Computes the full discrete convolution of two signals.
-    static func convolve(_ signal: Tensor<Double>, with kernel: Tensor<Double>) -> Tensor<Double>? {
+    static func convolve(_ signal: Tensor<Double>, with kernel: Tensor<Double>) throws -> Tensor<Double>? {
         guard isFiniteVector(signal), isFiniteVector(kernel),
-              signal.count > 0, kernel.count > 0,
-              let backend = try? BackendResolver.signalProcessingBackend() else { return nil }
+              signal.count > 0, kernel.count > 0 else { return nil }
+        let backend = try BackendResolver.signalProcessingBackend()
         return .vector(backend.convolve(signal.values, kernel: kernel.values))
     }
 
     /// Computes the full cross-correlation of two signals.
-    static func correlate(_ signal: Tensor<Double>, with kernel: Tensor<Double>) -> Tensor<Double>? {
+    static func correlate(_ signal: Tensor<Double>, with kernel: Tensor<Double>) throws -> Tensor<Double>? {
         guard isFiniteVector(kernel) else { return nil }
-        return convolve(signal, with: .vector(kernel.values.reversed()))
+        return try convolve(signal, with: .vector(kernel.values.reversed()))
     }
 
     /// Computes full autocorrelation.
-    static func autocorrelation(_ signal: Tensor<Double>) -> Tensor<Double>? {
-        correlate(signal, with: signal)
+    static func autocorrelation(_ signal: Tensor<Double>) throws -> Tensor<Double>? {
+        try correlate(signal, with: signal)
     }
 
     /// Smooths a signal with a centered moving average while preserving length.
@@ -224,12 +224,12 @@ public extension Numerica.SignalProcessing {
     }
 
     /// Removes the least-squares linear trend from a signal.
-    static func detrend(_ signal: Tensor<Double>) -> Tensor<Double>? {
+    static func detrend(_ signal: Tensor<Double>) throws -> Tensor<Double>? {
         guard isFiniteVector(signal), signal.count > 0 else { return nil }
         if signal.count == 1 { return .vector([0]) }
 
         let x = Tensor.vector((0..<signal.count).map(Double.init))
-        guard let regression = Numerica.Statistics.linearRegression(x: x, y: signal) else { return nil }
+        guard let regression = try Numerica.Statistics.linearRegression(x: x, y: signal) else { return nil }
 
         let values = signal.values.enumerated().map { index, value in
             value - (regression.slope * Double(index) + regression.intercept)
@@ -238,10 +238,10 @@ public extension Numerica.SignalProcessing {
     }
 
     /// Normalizes a signal to zero mean and unit sample standard deviation.
-    static func normalize(_ signal: Tensor<Double>) -> Tensor<Double>? {
+    static func normalize(_ signal: Tensor<Double>) throws -> Tensor<Double>? {
         guard isFiniteVector(signal),
-              let mean = Numerica.Statistics.mean(signal),
-              let standardDeviation = Numerica.Statistics.sampleStandardDeviation(signal),
+              let mean = try Numerica.Statistics.mean(signal),
+              let standardDeviation = try Numerica.Statistics.sampleStandardDeviation(signal),
               standardDeviation > 0 else { return nil }
 
         return .vector(signal.values.map { ($0 - mean) / standardDeviation })
@@ -290,8 +290,8 @@ public extension Numerica.SignalProcessing {
     }
 
     /// Computes a basic periodogram from the discrete Fourier transform.
-    static func periodogram(_ signal: Tensor<Double>) -> Tensor<Double>? {
-        guard let spectrum = fft(signal) else { return nil }
+    static func periodogram(_ signal: Tensor<Double>) throws -> Tensor<Double>? {
+        guard let spectrum = try fft(signal) else { return nil }
         let scale = Double(signal.count)
         return .vector(spectrum.values.map { value in
             let magnitude = value.magnitude
@@ -300,13 +300,13 @@ public extension Numerica.SignalProcessing {
     }
 
     /// Returns the magnitude spectrum.
-    static func magnitudeSpectrum(_ signal: Tensor<Double>) -> Tensor<Double>? {
-        fft(signal).map { .vector($0.values.map(\.magnitude)) }
+    static func magnitudeSpectrum(_ signal: Tensor<Double>) throws -> Tensor<Double>? {
+        try fft(signal).map { .vector($0.values.map(\.magnitude)) }
     }
 
     /// Returns the phase spectrum in radians.
-    static func phaseSpectrum(_ signal: Tensor<Double>) -> Tensor<Double>? {
-        fft(signal).map { .vector($0.values.map(\.phase)) }
+    static func phaseSpectrum(_ signal: Tensor<Double>) throws -> Tensor<Double>? {
+        try fft(signal).map { .vector($0.values.map(\.phase)) }
     }
 
     /// Applies a low-pass FIR filter.
@@ -315,9 +315,13 @@ public extension Numerica.SignalProcessing {
         cutoffFrequency: Double,
         sampleRate: Double,
         filterLength: Int = 101
-    ) -> Tensor<Double>? {
-        firKernel(cutoffFrequency: cutoffFrequency, sampleRate: sampleRate, filterLength: filterLength)
-            .flatMap { applyFIRKernel($0, to: signal) }
+    ) throws -> Tensor<Double>? {
+        guard let kernel = firKernel(
+            cutoffFrequency: cutoffFrequency,
+            sampleRate: sampleRate,
+            filterLength: filterLength
+        ) else { return nil }
+        return try applyFIRKernel(kernel, to: signal)
     }
 
     /// Applies a high-pass FIR filter.
@@ -326,7 +330,7 @@ public extension Numerica.SignalProcessing {
         cutoffFrequency: Double,
         sampleRate: Double,
         filterLength: Int = 101
-    ) -> Tensor<Double>? {
+    ) throws -> Tensor<Double>? {
         guard let lowPass = firKernel(
             cutoffFrequency: cutoffFrequency,
             sampleRate: sampleRate,
@@ -337,7 +341,7 @@ public extension Numerica.SignalProcessing {
         let values = lowPass.values.enumerated().map { index, value in
             (index == center ? 1 : 0) - value
         }
-        return applyFIRKernel(.vector(values), to: signal)
+        return try applyFIRKernel(.vector(values), to: signal)
     }
 
     /// Applies a band-pass FIR filter.
@@ -347,7 +351,7 @@ public extension Numerica.SignalProcessing {
         highCutoffFrequency: Double,
         sampleRate: Double,
         filterLength: Int = 101
-    ) -> Tensor<Double>? {
+    ) throws -> Tensor<Double>? {
         guard lowCutoffFrequency > 0,
               highCutoffFrequency > lowCutoffFrequency,
               let low = firKernel(
@@ -362,7 +366,7 @@ public extension Numerica.SignalProcessing {
               ) else { return nil }
 
         let values = zip(high.values, low.values).map { $0 - $1 }
-        return applyFIRKernel(.vector(values), to: signal)
+        return try applyFIRKernel(.vector(values), to: signal)
     }
 
     /// Applies a band-stop FIR filter.
@@ -372,7 +376,7 @@ public extension Numerica.SignalProcessing {
         highCutoffFrequency: Double,
         sampleRate: Double,
         filterLength: Int = 101
-    ) -> Tensor<Double>? {
+    ) throws -> Tensor<Double>? {
         guard lowCutoffFrequency > 0,
               highCutoffFrequency > lowCutoffFrequency,
               let low = firKernel(
@@ -390,7 +394,7 @@ public extension Numerica.SignalProcessing {
         let values = zip(high.values, low.values).enumerated().map { index, pair in
             (index == center ? 1 : 0) - (pair.0 - pair.1)
         }
-        return applyFIRKernel(.vector(values), to: signal)
+        return try applyFIRKernel(.vector(values), to: signal)
     }
 
     /// Applies a direct-form I biquad filter.
@@ -470,9 +474,9 @@ public extension Numerica.SignalProcessing {
         return .vector(values.map { $0 / total })
     }
 
-    private static func applyFIRKernel(_ kernel: Tensor<Double>, to signal: Tensor<Double>) -> Tensor<Double>? {
+    private static func applyFIRKernel(_ kernel: Tensor<Double>, to signal: Tensor<Double>) throws -> Tensor<Double>? {
         guard isFiniteVector(signal),
-              let convolved = convolve(signal, with: kernel) else { return nil }
+              let convolved = try convolve(signal, with: kernel) else { return nil }
 
         let start = kernel.count / 2
         let end = start + signal.count
@@ -482,8 +486,8 @@ public extension Numerica.SignalProcessing {
 
 public extension Tensor where Scalar == Double {
     /// Computes the discrete Fourier transform.
-    func fft() -> Tensor<Numerica.SignalProcessing.ComplexNumber>? {
-        Numerica.SignalProcessing.fft(self)
+    func fft() throws -> Tensor<Numerica.SignalProcessing.ComplexNumber>? {
+        try Numerica.SignalProcessing.fft(self)
     }
 
     /// Smooths the tensor with a centered moving average.
@@ -492,13 +496,13 @@ public extension Tensor where Scalar == Double {
     }
 
     /// Removes the least-squares linear trend.
-    func detrended() -> Tensor<Double>? {
-        Numerica.SignalProcessing.detrend(self)
+    func detrended() throws -> Tensor<Double>? {
+        try Numerica.SignalProcessing.detrend(self)
     }
 
     /// Normalizes values to zero mean and unit sample standard deviation.
-    func normalizedSignal() -> Tensor<Double>? {
-        Numerica.SignalProcessing.normalize(self)
+    func normalizedSignal() throws -> Tensor<Double>? {
+        try Numerica.SignalProcessing.normalize(self)
     }
 }
 

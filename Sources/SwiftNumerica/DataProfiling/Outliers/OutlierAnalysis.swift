@@ -15,9 +15,9 @@ public extension Numerica.DataProfiling {
     ///
     /// - Parameter tensor: The tensor to analyze.
     /// - Returns: Outlier analysis, or `nil` when quartiles are undefined.
-    static func outlierAnalysis(_ tensor: Tensor<Double>) -> OutlierAnalysis? {
-        guard let q1 = Numerica.Statistics.quantile(tensor, probability: 0.25),
-              let q3 = Numerica.Statistics.quantile(tensor, probability: 0.75) else { return nil }
+    static func outlierAnalysis(_ tensor: Tensor<Double>) throws -> OutlierAnalysis? {
+        guard let q1 = try Numerica.Statistics.quantile(tensor, probability: 0.25),
+              let q3 = try Numerica.Statistics.quantile(tensor, probability: 0.75) else { return nil }
         let iqr = q3 - q1
         let lowerFence = q1 - 1.5 * iqr
         let upperFence = q3 + 1.5 * iqr

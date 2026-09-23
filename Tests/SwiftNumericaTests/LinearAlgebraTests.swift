@@ -30,34 +30,42 @@ import Testing
 @Test func determinantInverseAndSolveUseSquareMatrixAlgebra() throws {
     let matrix = try #require(Matrix([[4, 7], [2, 6]]))
 
-    #expect(try #require(matrix.determinant()).isApproximatelyEqual(to: 10))
+    #expect(try #require(try matrix.determinant()).isApproximatelyEqual(to: 10))
 
-    let inverse = try #require(matrix.inverse())
+    let inverse = try #require(try matrix.inverse())
     #expect(inverse[0, 0].isApproximatelyEqual(to: 0.6))
     #expect(inverse[0, 1].isApproximatelyEqual(to: -0.7))
     #expect(inverse[1, 0].isApproximatelyEqual(to: -0.2))
     #expect(inverse[1, 1].isApproximatelyEqual(to: 0.4))
 
-    let solution = try #require(matrix.solve(Vector([1, 0])))
+    let solution = try #require(try matrix.solve(Vector([1, 0])))
     #expect(solution.values[0].isApproximatelyEqual(to: 0.6))
     #expect(solution.values[1].isApproximatelyEqual(to: -0.2))
+}
+
+@Test func linearAlgebraHandlesUniformlyScaledInvertibleMatrices() throws {
+    let matrix = try #require(Matrix([[1e-13, 0], [0, 1e-13]]))
+    let inverse = try #require(try matrix.inverse())
+    #expect(inverse[0, 0].isApproximatelyEqual(to: 1e13, tolerance: 1e-12))
+    #expect(try #require(try matrix.determinant()).isApproximatelyEqual(to: 1e-26, tolerance: 1e-12))
+    #expect(try #require(try matrix.solve(Vector([1e-13, 2e-13]))).values == [1, 2])
 }
 
 @Test func freeLinearAlgebraFunctionsDelegateToNamespace() throws {
     let matrix = try #require(Matrix([[1, 2], [3, 4]]))
     let vector = Vector([5, 11])
 
-    #expect(try #require(determinant(matrix)).isApproximatelyEqual(to: -2))
-    let solution = try #require(solve(matrix, vector))
+    #expect(try #require(try determinant(matrix)).isApproximatelyEqual(to: -2))
+    let solution = try #require(try solve(matrix, vector))
     #expect(solution.values[0].isApproximatelyEqual(to: 1))
     #expect(solution.values[1].isApproximatelyEqual(to: 2))
-    #expect(inverse(matrix) != nil)
+    try #expect(inverse(matrix) != nil)
 }
 
 @Test func eigenvaluesAndEigenvectorsWorkForSymmetricMatrices() throws {
     let matrix = try #require(Matrix([[2, 1], [1, 2]]))
-    let values = try #require(matrix.eigenvalues())
-    let vectors = try #require(matrix.eigenvectors())
+    let values = try #require(try matrix.eigenvalues())
+    let vectors = try #require(try matrix.eigenvectors())
 
     #expect(values[0].isApproximatelyEqual(to: 3, tolerance: 1e-10))
     #expect(values[1].isApproximatelyEqual(to: 1, tolerance: 1e-10))
@@ -75,13 +83,13 @@ import Testing
 @Test func eigenDecompositionReturnsNilForNonSymmetricMatrices() throws {
     let matrix = try #require(Matrix([[0, 1], [-2, 0]]))
 
-    #expect(matrix.eigenvalues() == nil)
-    #expect(matrix.eigenvectors() == nil)
+    try #expect(matrix.eigenvalues() == nil)
+    try #expect(matrix.eigenvectors() == nil)
 }
 
 @Test func inverseRoundTripsForLargerMatrices() throws {
     let matrix = try #require(Matrix([[2, 1, 0], [1, 3, 1], [0, 1, 4]]))
-    let inverse = try #require(matrix.inverse())
+    let inverse = try #require(try matrix.inverse())
 
     for row in 0..<matrix.rowCount {
         for column in 0..<matrix.columnCount {
@@ -106,8 +114,8 @@ import Testing
             [large, large],
         ]))
 
-    #expect(matrix.eigenvalues() != nil)
-    #expect(matrix.eigenvectors() != nil)
+    try #expect(matrix.eigenvalues() != nil)
+    try #expect(matrix.eigenvectors() != nil)
 }
 
 private func multiply(_ matrix: Matrix, by vector: [Double]) -> [Double] {
@@ -125,7 +133,7 @@ private func norm(_ vector: [Double]) -> Double {
 @Test func choleskyDecompositionFactorsSymmetricPositiveDefiniteMatrices() throws {
     // Classic reference example: A = L * Lt with known integer factor.
     let matrix = try #require(Matrix([[4, 12, -16], [12, 37, -43], [-16, -43, 98]]))
-    let factor = try #require(matrix.choleskyDecomposition())
+    let factor = try #require(try matrix.choleskyDecomposition())
     let expected = [[2.0, 0, 0], [6, 1, 0], [-8, 5, 3]]
 
     for row in 0..<3 {
@@ -141,29 +149,29 @@ private func norm(_ vector: [Double]) -> Double {
 
 @Test func logDeterminantMatchesDeterminantForSPDMatrices() throws {
     let matrix = try #require(Matrix([[4, 1, 2], [1, 5, 3], [2, 3, 6]]))
-    let logDet = try #require(matrix.logDeterminant())
-    let determinant = try #require(matrix.determinant())
+    let logDet = try #require(try matrix.logDeterminant())
+    let determinant = try #require(try matrix.determinant())
 
     #expect(logDet.isApproximatelyEqual(to: Foundation.log(determinant), tolerance: 1e-10))
-    #expect(logDeterminant(matrix)?.isApproximatelyEqual(to: logDet) == true)
+    try #expect(logDeterminant(matrix)?.isApproximatelyEqual(to: logDet) == true)
     #expect(try #require(Matrix([[1, 2], [3, 4]])).logDeterminant() == nil)
 }
 
 @Test func solveSupportsMatrixRightHandSides() throws {
     let matrix = try #require(Matrix([[4, 7], [2, 6]]))
     let rightHandSide = try #require(Matrix([[1, 0], [0, 1]]))
-    let solution = try #require(matrix.solve(rightHandSide))
+    let solution = try #require(try matrix.solve(rightHandSide))
 
     // Solving against the identity yields the inverse.
-    let inverse = try #require(matrix.inverse())
+    let inverse = try #require(try matrix.inverse())
     for row in 0..<2 {
         for column in 0..<2 {
             #expect(solution[row, column].isApproximatelyEqual(to: inverse[row, column], tolerance: 1e-10))
         }
     }
 
-    #expect(solve(matrix, rightHandSide) != nil)
-    #expect(matrix.solve(try #require(Matrix([[1.0], [2], [3]]))) == nil)
+    try #expect(solve(matrix, rightHandSide) != nil)
+    try #expect(matrix.solve(try #require(Matrix([[1.0], [2], [3]]))) == nil)
 }
 
 @Test func symmetricRoutinesAcceptSinglePrecisionAsymmetry() throws {
@@ -171,12 +179,12 @@ private func norm(_ vector: [Double]) -> Double {
     // must be symmetrized internally rather than rejected.
     let noisy = try #require(Matrix([[2, 1 + 1e-7], [1, 2]]))
 
-    let values = try #require(noisy.eigenvalues())
+    let values = try #require(try noisy.eigenvalues())
     #expect(values[0].isApproximatelyEqual(to: 3, tolerance: 1e-6))
     #expect(values[1].isApproximatelyEqual(to: 1, tolerance: 1e-6))
-    #expect(noisy.eigenvectors() != nil)
+    try #expect(noisy.eigenvectors() != nil)
 
     let spdNoisy = try #require(Matrix([[4, 1 + 1e-7], [1, 4]]))
-    #expect(spdNoisy.choleskyDecomposition() != nil)
-    #expect(spdNoisy.logDeterminant() != nil)
+    try #expect(spdNoisy.choleskyDecomposition() != nil)
+    try #expect(spdNoisy.logDeterminant() != nil)
 }

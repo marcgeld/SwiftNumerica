@@ -19,13 +19,17 @@ public extension Numerica.DataProfiling {
     /// - Returns: Uniformity analysis, or `nil` when inputs are invalid.
     static func uniformityAnalysis(_ tensor: Tensor<Double>, bucketCount: Int = 10) -> UniformityAnalysis? {
         guard bucketCount > 0,
+              tensor.values.allSatisfy(\.isFinite),
               let minimum = tensor.values.min(),
               let maximum = tensor.values.max(),
               minimum != maximum else { return nil }
 
         var buckets = Array(repeating: 0, count: bucketCount)
+        let range = maximum - minimum
         for value in tensor.values {
-            let scaled = (value - minimum) / (maximum - minimum)
+            let scaled = range.isFinite
+                ? (value - minimum) / range
+                : (value / 2 - minimum / 2) / (maximum / 2 - minimum / 2)
             let index = min(bucketCount - 1, Int((scaled * Double(bucketCount)).rounded(.down)))
             buckets[index] += 1
         }

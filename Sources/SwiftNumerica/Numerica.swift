@@ -1,3 +1,5 @@
+import Foundation
+
 /// A compute backend that can execute SwiftNumerica operations.
 public enum ComputeBackend: Sendable {
     /// The pure Swift reference backend.
@@ -46,8 +48,14 @@ public struct NumericaConfiguration: Sendable {
 /// A namespace for numerical computing, statistics, probability, combinatorics,
 /// and linear algebra APIs.
 public enum Numerica {
+    private static let configurationLock = NSLock()
+    nonisolated(unsafe) private static var storedConfiguration = NumericaConfiguration()
+
     /// The process-wide SwiftNumerica runtime configuration.
-    public nonisolated(unsafe) static var configuration = NumericaConfiguration()
+    public nonisolated(unsafe) static var configuration: NumericaConfiguration {
+        get { configurationLock.withLock { storedConfiguration } }
+        set { configurationLock.withLock { storedConfiguration = newValue } }
+    }
 
     /// Returns the backend that will be used for the current configuration.
     ///

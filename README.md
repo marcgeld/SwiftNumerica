@@ -96,15 +96,17 @@ Available backend options:
 - `ComputeBackend.accelerate`: always uses Accelerate-backed implementations for operations implemented in that backend. Selecting it explicitly fails availability resolution with `BackendError.unavailable(.accelerate)` when Accelerate cannot be imported.
 - `ComputeBackend.automatic`: automatic backend selection. The priority is Accelerate, then PureSwift.
 
+Operations that select a compute backend are `throws`. When an explicitly selected backend is unavailable, they propagate `BackendError.unavailable`; `nil` remains reserved for undefined results or invalid numerical inputs. Call sites should use `try` and handle backend errors.
+
 Users can switch backends at runtime:
 
 ```swift
 Numerica.configuration.backend = .pureSwift
-let reference = Numerica.Statistics.mean(Tensor.vector([1, 2, 3]))
+let reference = try Numerica.Statistics.mean(Tensor.vector([1, 2, 3]))
 
 Numerica.configuration.backend = .accelerate
 let resolved = try Numerica.resolvedBackend()
-let accelerated = Numerica.Statistics.mean(Tensor.vector([1, 2, 3]))
+let accelerated = try Numerica.Statistics.mean(Tensor.vector([1, 2, 3]))
 
 Numerica.configuration.backend = .automatic
 ```

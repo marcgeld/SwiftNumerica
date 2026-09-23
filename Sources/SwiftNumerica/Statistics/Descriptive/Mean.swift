@@ -3,7 +3,7 @@ public extension Numerica.Statistics {
     ///
     /// - Parameter tensor: The tensor to average.
     /// - Returns: The arithmetic mean, or `nil` when `tensor` is empty.
-    static func mean(_ tensor: Tensor<Double>) -> Double? {
-        try? BackendResolver.statisticsBackend().mean(tensor)
+    static func mean(_ tensor: Tensor<Double>) throws -> Double? {
+        try BackendResolver.statisticsBackend().mean(tensor)
     }
 }

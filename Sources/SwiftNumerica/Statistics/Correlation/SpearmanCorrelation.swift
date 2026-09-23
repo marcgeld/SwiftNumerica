@@ -5,7 +5,7 @@ public extension Numerica.Statistics {
     ///   - x: The first tensor.
     ///   - y: The second tensor.
     /// - Returns: The Spearman correlation coefficient, or `nil` when undefined.
-    static func spearmanCorrelation(_ x: Tensor<Double>, _ y: Tensor<Double>) -> Double? {
-        try? BackendResolver.statisticsBackend().spearmanCorrelation(x, y)
+    static func spearmanCorrelation(_ x: Tensor<Double>, _ y: Tensor<Double>) throws -> Double? {
+        try BackendResolver.statisticsBackend().spearmanCorrelation(x, y)
     }
 }

@@ -11,7 +11,7 @@ internal enum ProbabilityMath {
     internal static func factorial(_ n: Int) -> Double? {
         guard n >= 0 else { return nil }
         guard n > 1 else { return 1 }
-        return Double((2...n).reduce(1, *))
+        return (2...n).reduce(1.0) { $0 * Double($1) }
     }
 
     internal static func combinations(n: Int, r: Int) -> Double? {

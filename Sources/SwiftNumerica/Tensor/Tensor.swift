@@ -8,7 +8,7 @@ public struct Tensor<Scalar: Sendable>: Equatable, Sendable where Scalar: Equata
     public let shape: Shape
 
     /// The tensor values in row-major storage order.
-    public var values: [Scalar]
+    public let values: [Scalar]
 
     /// The tensor rank.
     public var rank: Int {
@@ -46,7 +46,12 @@ public struct Tensor<Scalar: Sendable>: Equatable, Sendable where Scalar: Equata
             throw TensorError.invalidShape
         }
 
-        let newCount = newShape.reduce(1, *)
+        var newCount = 1
+        for dimension in newShape {
+            let (product, overflow) = newCount.multipliedReportingOverflow(by: dimension)
+            guard !overflow else { throw TensorError.incompatibleShape }
+            newCount = product
+        }
         guard newCount == values.count else {
             throw TensorError.incompatibleShape
         }

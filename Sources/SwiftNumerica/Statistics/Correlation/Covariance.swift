@@ -7,8 +7,8 @@ public extension Numerica.Statistics {
     ///   - x: The first tensor.
     ///   - y: The second tensor.
     /// - Returns: The sample covariance, or `nil` when undefined.
-    static func covariance(_ x: Tensor<Double>, _ y: Tensor<Double>) -> Double? {
-        sampleCovariance(x, y)
+    static func covariance(_ x: Tensor<Double>, _ y: Tensor<Double>) throws -> Double? {
+        try sampleCovariance(x, y)
     }
 
     /// Returns the population covariance between two tensors.
@@ -17,8 +17,8 @@ public extension Numerica.Statistics {
     ///   - x: The first tensor.
     ///   - y: The second tensor.
     /// - Returns: The population covariance, or `nil` when undefined.
-    static func populationCovariance(_ x: Tensor<Double>, _ y: Tensor<Double>) -> Double? {
-        try? BackendResolver.statisticsBackend().populationCovariance(x, y)
+    static func populationCovariance(_ x: Tensor<Double>, _ y: Tensor<Double>) throws -> Double? {
+        try BackendResolver.statisticsBackend().populationCovariance(x, y)
     }
 
     /// Returns the sample covariance between two tensors.
@@ -27,8 +27,8 @@ public extension Numerica.Statistics {
     ///   - x: The first tensor.
     ///   - y: The second tensor.
     /// - Returns: The sample covariance, or `nil` when undefined.
-    static func sampleCovariance(_ x: Tensor<Double>, _ y: Tensor<Double>) -> Double? {
-        try? BackendResolver.statisticsBackend().sampleCovariance(x, y)
+    static func sampleCovariance(_ x: Tensor<Double>, _ y: Tensor<Double>) throws -> Double? {
+        try BackendResolver.statisticsBackend().sampleCovariance(x, y)
     }
 
     /// Returns the Pearson correlation coefficient for two tensors.
@@ -39,7 +39,7 @@ public extension Numerica.Statistics {
     ///   - x: The first tensor.
     ///   - y: The second tensor.
     /// - Returns: The Pearson correlation coefficient, or `nil` when undefined.
-    static func correlation(_ x: Tensor<Double>, _ y: Tensor<Double>) -> Double? {
-        pearsonCorrelation(x, y)
+    static func correlation(_ x: Tensor<Double>, _ y: Tensor<Double>) throws -> Double? {
+        try pearsonCorrelation(x, y)
     }
 }

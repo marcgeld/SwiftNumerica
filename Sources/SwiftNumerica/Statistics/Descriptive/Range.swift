@@ -5,7 +5,7 @@ public extension Numerica.Statistics {
     ///
     /// - Parameter tensor: The tensor to summarize.
     /// - Returns: The range, or `nil` when `tensor` is empty.
-    static func range(_ tensor: Tensor<Double>) -> Double? {
-        try? BackendResolver.statisticsBackend().range(tensor)
+    static func range(_ tensor: Tensor<Double>) throws -> Double? {
+        try BackendResolver.statisticsBackend().range(tensor)
     }
 }

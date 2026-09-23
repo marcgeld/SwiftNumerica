@@ -10,7 +10,10 @@ public struct Shape: Equatable, Sendable {
 
     /// The number of scalar elements described by the shape.
     public var count: Int {
-        dimensions.reduce(1, *)
+        dimensions.reduce(1) { product, dimension in
+            let (result, overflow) = product.multipliedReportingOverflow(by: dimension)
+            return overflow ? Int.max : result
+        }
     }
 
     /// Creates a shape from dimensions.
@@ -21,6 +24,12 @@ public struct Shape: Equatable, Sendable {
     /// - Parameter dimensions: Non-negative dimension sizes.
     public init?(_ dimensions: [Int]) {
         guard dimensions.allSatisfy({ $0 >= 0 }) else { return nil }
+        var count = 1
+        for dimension in dimensions {
+            let (product, overflow) = count.multipliedReportingOverflow(by: dimension)
+            guard !overflow else { return nil }
+            count = product
+        }
         self.dimensions = dimensions
     }
 }
