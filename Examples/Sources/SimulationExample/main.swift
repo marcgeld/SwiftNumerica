@@ -17,10 +17,10 @@ struct FixedGenerator: RandomNumberGenerator {
 
 var generator = FixedGenerator()
 let monteCarlo = MonteCarloSimulation(iterations: 5)!
-let monteCarloResult = monteCarlo.run(using: &generator) {
+let monteCarloResult = try monteCarlo.run(using: &generator) {
     Double.random(in: 0...1, using: &$0)
 }
-let closureResult = monteCarlo.run { 0.5 }
+let closureResult = try monteCarlo.run { 0.5 }
 
 print("Monte Carlo random estimates (expected fixed-generator sequence with 5 values): \(monteCarloResult?.estimates.values ?? [])")
 print("Monte Carlo constant mean (expected five estimates of 0.5 -> mean 0.5): \(closureResult?.mean ?? .nan)")

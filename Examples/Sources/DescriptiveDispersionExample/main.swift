@@ -6,15 +6,15 @@ import SwiftNumerica
 // This example shows range, variance, standard deviation, and z-score APIs.
 
 let data = Tensor.vector([2, 4, 4, 4, 5, 5, 7, 9])
-let mean = data.mean()!
-let populationStandardDeviation = data.populationStandardDeviation()!
-let range = Numerica.Statistics.range(data)
-let populationVariance = Numerica.Statistics.populationVariance(data)
-let sampleVariance = Numerica.Statistics.sampleVariance(data)
-let varianceAlias = Numerica.Statistics.variance(data)
-let sampleStandardDeviation = Numerica.Statistics.sampleStandardDeviation(data)
-let standardDeviationAlias = Numerica.Statistics.standardDeviation(data)
-let zScore = Numerica.Statistics.zScore(value: 9, mean: mean, standardDeviation: populationStandardDeviation)
+let mean = try data.mean()!
+let populationStandardDeviation = try data.populationStandardDeviation()!
+let range = try Numerica.Statistics.range(data)
+let populationVariance = try Numerica.Statistics.populationVariance(data)
+let sampleVariance = try Numerica.Statistics.sampleVariance(data)
+let varianceAlias = try Numerica.Statistics.variance(data)
+let sampleStandardDeviation = try Numerica.Statistics.sampleStandardDeviation(data)
+let standardDeviationAlias = try Numerica.Statistics.standardDeviation(data)
+let zScore = try Numerica.Statistics.zScore(value: 9, mean: mean, standardDeviation: populationStandardDeviation)
 
 print("Data (expected eight values): \(data.values)")
 print("Range (expected 9 - 2 = 7): \(range ?? .nan)")

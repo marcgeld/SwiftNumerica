@@ -5,9 +5,9 @@ import SwiftNumerica
 //
 // This example computes factorials, combinations, and permutations.
 
-let factorial = Numerica.Combinatorics.factorial(5)
-let combinations = Numerica.Combinatorics.combinations(n: 10, r: 3)
-let permutations = Numerica.Combinatorics.permutations(n: 10, r: 3)
+let factorial = try Numerica.Combinatorics.factorial(5)
+let combinations = try Numerica.Combinatorics.combinations(n: 10, r: 3)
+let permutations = try Numerica.Combinatorics.permutations(n: 10, r: 3)
 
 print("5! (expected 5 x 4 x 3 x 2 x 1 = 120): \(factorial ?? -1)")
 print("10 choose 3 (expected 10! / (3! x 7!) = 120): \(combinations ?? -1)")

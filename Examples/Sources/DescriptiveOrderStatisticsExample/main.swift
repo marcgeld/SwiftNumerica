@@ -6,11 +6,11 @@ import SwiftNumerica
 // This example shows quantile, percentile, and interquartile range APIs.
 
 let data = Tensor.vector([2, 4, 4, 4, 5, 5, 7, 9])
-let firstQuartile = Numerica.Statistics.quantile(data, probability: 0.25)
-let medianPercentile = Numerica.Statistics.percentile(data, percentile: 50)
-let percentile95 = data.percentile(95)
-let interquartileRange = Numerica.Statistics.interquartileRange(data)
-let valueStyleInterquartileRange = data.interquartileRange()
+let firstQuartile = try Numerica.Statistics.quantile(data, probability: 0.25)
+let medianPercentile = try Numerica.Statistics.percentile(data, percentile: 50)
+let percentile95 = try data.percentile(95)
+let interquartileRange = try Numerica.Statistics.interquartileRange(data)
+let valueStyleInterquartileRange = try data.interquartileRange()
 
 print("Data (expected sorted sample with repeated 4s and 5s): \(data.values)")
 print("First quartile (expected 25th percentile = 4): \(firstQuartile ?? .nan)")

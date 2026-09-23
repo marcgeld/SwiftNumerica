@@ -7,7 +7,7 @@ import SwiftNumerica
 
 let features = Tensor.matrix([[1, 0], [0, 1], [1, 1], [2, 1]])!
 let target = Tensor.vector([6, 6, 9, 12])
-let result = Numerica.Statistics.multipleLinearRegression(features: features, target: target)!
+let result = try Numerica.Statistics.multipleLinearRegression(features: features, target: target)!
 let prediction = result.predict(Tensor.vector([2, 2]))
 
 print("Feature matrix:", features.values)

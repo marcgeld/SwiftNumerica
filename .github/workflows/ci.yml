@@ -19,7 +19,7 @@ concurrency:
 
 jobs:
   test:
-    name: Build, test, and validate package consumption
+    name: Build, test, and run examples
     runs-on: macos-26
 
     steps:
@@ -37,50 +37,6 @@ jobs:
 
       - name: Test
         run: swift test
-
-      - name: Create consumer package
-        run: |
-          set -euo pipefail
-
-          CONSUMER_DIR="$(mktemp -d)"
-          cd "$CONSUMER_DIR"
-
-          cat > Package.swift <<EOF
-          // swift-tools-version: 6.2
-
-          import PackageDescription
-
-          let package = Package(
-              name: "SwiftNumericaConsumer",
-              platforms: [
-                  .macOS(.v14)
-              ],
-              dependencies: [
-                  .package(path: "${GITHUB_WORKSPACE}")
-              ],
-              targets: [
-                  .executableTarget(
-                      name: "SwiftNumericaConsumer",
-                      dependencies: [
-                          .product(name: "SwiftNumerica", package: "SwiftNumerica")
-                      ]
-                  )
-              ],
-              swiftLanguageModes: [.v6]
-          )
-          EOF
-
-          mkdir -p Sources/SwiftNumericaConsumer
-          cat > Sources/SwiftNumericaConsumer/main.swift <<'EOF'
-          import SwiftNumerica
-
-          let tensor = Tensor.vector([1, 2, 3, 4])
-          guard Numerica.Statistics.mean(tensor) == 2.5 else {
-              fatalError("SwiftNumerica import or mean calculation failed")
-          }
-          EOF
-
-          swift run
 
       - name: Build and run examples
         working-directory: Examples

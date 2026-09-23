@@ -16,10 +16,10 @@ struct FixedGenerator: RandomNumberGenerator {
 
 var generator = FixedGenerator()
 let simulation = MonteCarloSimulation(iterations: 5)!
-let randomResult = simulation.run(using: &generator) {
+let randomResult = try simulation.run(using: &generator) {
     Double.random(in: 0...1, using: &$0)
 }
-let deterministicResult = simulation.run { 0.5 }
+let deterministicResult = try simulation.run { 0.5 }
 
 print("Random estimates (expected fixed-generator sequence with 5 values): \(randomResult?.estimates.values ?? [])")
 print("Random mean (expected approximately 0.3235705269230825): \(randomResult?.mean ?? .nan)")

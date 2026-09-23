@@ -7,8 +7,8 @@ import SwiftNumerica
 
 let x = Tensor.vector([-1, 0, 1])
 let y = Tensor.vector([2, 1, 6])
-let result = Numerica.Statistics.polynomialRegression(x: x, y: y, degree: 2)!
-let modelResult = PolynomialRegression(degree: 2)!.fit(x, y)!
+let result = try Numerica.Statistics.polynomialRegression(x: x, y: y, degree: 2)!
+let modelResult = try PolynomialRegression(degree: 2)!.fit(x, y)!
 let scalarPrediction = result.predict(2)
 let vectorPrediction = modelResult.predict(Tensor.vector([2, 3]))
 

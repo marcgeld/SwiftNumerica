@@ -13,18 +13,18 @@ print("Default backend (expected automatic): \(defaultBackend)")
 print("Accelerate available (expected true on Apple platforms with Accelerate): \(accelerateAvailable)")
 
 Numerica.configuration.backend = .pureSwift
-let pureSwiftMean = Numerica.Statistics.mean(data)
+let pureSwiftMean = try Numerica.Statistics.mean(data)
 print("Pure Swift mean (expected (1 + 2 + 3 + 4) / 4 = 2.5): \(pureSwiftMean ?? .nan)")
 
 Numerica.configuration.backend = .automatic
 let resolvedBackend = try Numerica.resolvedBackend()
-let automaticMean = Numerica.Statistics.mean(data)
+let automaticMean = try Numerica.Statistics.mean(data)
 print("Resolved automatic backend (expected accelerate when available, otherwise pureSwift): \(resolvedBackend)")
 print("Automatic mean (expected same mean = 2.5): \(automaticMean ?? .nan)")
 
 if accelerateAvailable {
     Numerica.configuration.backend = .accelerate
-    let accelerateMean = Numerica.Statistics.mean(data)
+    let accelerateMean = try Numerica.Statistics.mean(data)
     print("Accelerate mean (expected same mean = 2.5): \(accelerateMean ?? .nan)")
 }
 

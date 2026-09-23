@@ -6,31 +6,31 @@ import SwiftNumerica
 // This example summarizes one tensor using the core descriptive statistics API.
 
 let data = Tensor.vector([2, 4, 4, 4, 5, 5, 7, 9])
-let sum = Numerica.Statistics.sum(data)
-let min = Numerica.Statistics.min(data)
-let max = Numerica.Statistics.max(data)
-let range = Numerica.Statistics.range(data)
-let mean = Numerica.Statistics.mean(data)
-let median = Numerica.Statistics.median(data)
-let mode = Numerica.Statistics.mode(data)
-let populationVariance = Numerica.Statistics.populationVariance(data)
-let sampleVariance = Numerica.Statistics.sampleVariance(data)
-let varianceAlias = Numerica.Statistics.variance(data)
-let populationStandardDeviation = Numerica.Statistics.populationStandardDeviation(data)
-let sampleStandardDeviation = Numerica.Statistics.sampleStandardDeviation(data)
-let standardDeviationAlias = Numerica.Statistics.standardDeviation(data)
-let firstQuartile = Numerica.Statistics.quantile(data, probability: 0.25)
-let percentile95 = Numerica.Statistics.percentile(data, percentile: 95)
-let interquartileRange = Numerica.Statistics.interquartileRange(data)
-let skewness = Numerica.Statistics.skewness(data)
-let kurtosis = Numerica.Statistics.kurtosis(data)
-let zScore = Numerica.Statistics.zScore(
+let sum = try Numerica.Statistics.sum(data)
+let min = try Numerica.Statistics.min(data)
+let max = try Numerica.Statistics.max(data)
+let range = try Numerica.Statistics.range(data)
+let mean = try Numerica.Statistics.mean(data)
+let median = try Numerica.Statistics.median(data)
+let mode = try Numerica.Statistics.mode(data)
+let populationVariance = try Numerica.Statistics.populationVariance(data)
+let sampleVariance = try Numerica.Statistics.sampleVariance(data)
+let varianceAlias = try Numerica.Statistics.variance(data)
+let populationStandardDeviation = try Numerica.Statistics.populationStandardDeviation(data)
+let sampleStandardDeviation = try Numerica.Statistics.sampleStandardDeviation(data)
+let standardDeviationAlias = try Numerica.Statistics.standardDeviation(data)
+let firstQuartile = try Numerica.Statistics.quantile(data, probability: 0.25)
+let percentile95 = try Numerica.Statistics.percentile(data, percentile: 95)
+let interquartileRange = try Numerica.Statistics.interquartileRange(data)
+let skewness = try Numerica.Statistics.skewness(data)
+let kurtosis = try Numerica.Statistics.kurtosis(data)
+let zScore = try Numerica.Statistics.zScore(
     value: 9,
-    mean: data.mean() ?? 0,
-    standardDeviation: data.populationStandardDeviation() ?? 1
+    mean: try data.mean() ?? 0,
+    standardDeviation: try data.populationStandardDeviation() ?? 1
 )
-let valueStyleMean = data.mean()
-let valueStylePercentile = data.percentile(95)
+let valueStyleMean = try data.mean()
+let valueStylePercentile = try data.percentile(95)
 
 print("Data (expected eight values): \(data.values)")
 print("Sum (expected 40): \(sum ?? .nan)")

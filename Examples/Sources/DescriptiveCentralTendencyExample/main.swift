@@ -6,14 +6,14 @@ import SwiftNumerica
 // This example shows the public mean, median, mode, sum, min, and max APIs.
 
 let data = Tensor.vector([2, 4, 4, 4, 5, 5, 7, 9])
-let sum = Numerica.Statistics.sum(data)
-let minimum = Numerica.Statistics.min(data)
-let maximum = Numerica.Statistics.max(data)
-let mean = Numerica.Statistics.mean(data)
-let median = Numerica.Statistics.median(data)
-let mode = Numerica.Statistics.mode(data)
-let valueStyleMean = data.mean()
-let valueStyleMedian = data.median()
+let sum = try Numerica.Statistics.sum(data)
+let minimum = try Numerica.Statistics.min(data)
+let maximum = try Numerica.Statistics.max(data)
+let mean = try Numerica.Statistics.mean(data)
+let median = try Numerica.Statistics.median(data)
+let mode = try Numerica.Statistics.mode(data)
+let valueStyleMean = try data.mean()
+let valueStyleMedian = try data.median()
 
 print("Data (expected eight values): \(data.values)")
 print("Sum (expected 2 + 4 + 4 + 4 + 5 + 5 + 7 + 9 = 40): \(sum ?? .nan)")

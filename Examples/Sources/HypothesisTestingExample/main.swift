@@ -11,10 +11,10 @@ let sampleB = Tensor.vector([1, 2, 3, 4, 5])
 let pairedA = Tensor.vector([5, 7, 8, 10, 11])
 let pairedB = Tensor.vector([1, 2, 3, 4, 5])
 
-let welch = HypothesisTesting.welchTTest(sampleA, sampleB, alternative: .greater)
-let paired = HypothesisTesting.pairedTTest(pairedA, pairedB)
+let welch = try HypothesisTesting.welchTTest(sampleA, sampleB, alternative: .greater)
+let paired = try HypothesisTesting.pairedTTest(pairedA, pairedB)
 let chiSquare = HypothesisTesting.chiSquareGoodnessOfFit(observed: Tensor.vector([20, 5, 5]))
-let anova = HypothesisTesting.oneWayANOVA([
+let anova = try HypothesisTesting.oneWayANOVA([
     Tensor.vector([1, 2, 1]),
     Tensor.vector([5, 6, 5]),
     Tensor.vector([9, 10, 9]),

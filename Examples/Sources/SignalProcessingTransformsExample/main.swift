@@ -9,17 +9,17 @@ import SwiftNumerica
 let samples = Tensor.vector([1, 0, -1, 0])
 let signal = Signal(samples: samples, sampleRate: 4)!
 
-let spectrum = Numerica.SignalProcessing.fft(samples)!
-let reconstructed = Numerica.SignalProcessing.inverseFFT(spectrum)!
-let periodogram = Numerica.SignalProcessing.periodogram(samples)!
-let magnitudes = Numerica.SignalProcessing.magnitudeSpectrum(samples)!
-let phases = Numerica.SignalProcessing.phaseSpectrum(samples)!
+let spectrum = try Numerica.SignalProcessing.fft(samples)!
+let reconstructed = try Numerica.SignalProcessing.inverseFFT(spectrum)!
+let periodogram = try Numerica.SignalProcessing.periodogram(samples)!
+let magnitudes = try Numerica.SignalProcessing.magnitudeSpectrum(samples)!
+let phases = try Numerica.SignalProcessing.phaseSpectrum(samples)!
 let smoothed = signal.movingAverage(windowSize: 3)!
-let detrended = signal.detrended()!
-let normalized = signal.normalized()!
+let detrended = try signal.detrended()!
+let normalized = try signal.normalized()!
 let crossings = Numerica.SignalProcessing.zeroCrossingRate(Tensor.vector([-1, 1, -1, 1]))!
 let peaks = signal.peaks()
-let valueStyleFFTMagnitudes = samples.fft()?.values.map(\.magnitude)
+let valueStyleFFTMagnitudes = try samples.fft()?.values.map(\.magnitude)
 
 print("Input samples (expected cosine-like [1, 0, -1, 0]): \(signal.values)")
 print("FFT spectrum (expected energy at bins 1 and 3 with magnitude 2): \(spectrum.values.map { ($0.real, $0.imaginary) })")

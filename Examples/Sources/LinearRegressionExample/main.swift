@@ -7,8 +7,8 @@ import SwiftNumerica
 
 let x = Tensor.vector([1, 2, 3])
 let y = Tensor.vector([3, 5, 7])
-let result = Numerica.Statistics.linearRegression(x: x, y: y)!
-let modelResult = LinearRegression().fit(x, y)!
+let result = try Numerica.Statistics.linearRegression(x: x, y: y)!
+let modelResult = try LinearRegression().fit(x, y)!
 let scalarPrediction = result.predict(4)
 let vectorPrediction = result.predict(Tensor.vector([4, 5]))
 let modelPrediction = modelResult.predict(4)

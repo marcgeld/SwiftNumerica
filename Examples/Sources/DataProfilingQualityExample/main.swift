@@ -8,12 +8,12 @@ import SwiftNumerica
 
 let values = Tensor.vector([1, 2, 3, 4, 5, 10, 100, 1_000])
 let matrix = Tensor.matrix([[1, 2], [2, 4], [3, 6], [4, 8]])!
-let normality = Numerica.DataProfiling.normalityAnalysis(values)
+let normality = try Numerica.DataProfiling.normalityAnalysis(values)
 let uniformity = Numerica.DataProfiling.uniformityAnalysis(values, bucketCount: 4)
-let outliers = Numerica.DataProfiling.outlierAnalysis(values)
-let trend = Numerica.DataProfiling.trendAnalysis(values)
+let outliers = try Numerica.DataProfiling.outlierAnalysis(values)
+let trend = try Numerica.DataProfiling.trendAnalysis(values)
 let growth = Numerica.DataProfiling.growthRates(values)
-let profile = DatasetProfiler.profile(matrix)
+let profile = try DatasetProfiler.profile(matrix)
 
 print("Normality (expected mean 140.625 and isApproximatelyNormal false): \(normality as Any)")
 print("Uniformity (expected chi-square 17 and isApproximatelyUniform false): \(uniformity as Any)")

@@ -10,9 +10,9 @@ let normalSample = Tensor.vector([8, 9, 10, 11, 12])
 let uniformSample = Tensor.vector([-2, 0, 1, 3])
 let exponentialSample = Tensor.vector([0.25, 0.5, 1.0, 1.25])
 
-let normal = Numerica.Statistics.DistributionAnalysis.fitNormal(normalSample)
+let normal = try Numerica.Statistics.DistributionAnalysis.fitNormal(normalSample)
 let uniform = Numerica.Statistics.DistributionAnalysis.fitUniform(uniformSample)
-let exponential = Numerica.Statistics.DistributionAnalysis.fitExponential(exponentialSample)
+let exponential = try Numerica.Statistics.DistributionAnalysis.fitExponential(exponentialSample)
 
 print("Fitted normal mean/std (expected mean 10, sample std sqrt(2) = 1.4142135623730951): \(normal?.mean ?? .nan) \(normal?.standardDeviation ?? .nan)")
 print("Fitted uniform bounds (expected min -2, max 3): \(uniform?.lowerBound ?? .nan) \(uniform?.upperBound ?? .nan)")

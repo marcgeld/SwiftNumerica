@@ -9,21 +9,21 @@ import SwiftNumerica
 let matrix = Matrix([[4, 7], [2, 6]])!
 let vector = Vector([1, 0])
 let symmetric = Matrix([[2, 1], [1, 2]])!
-let determinantNamespace = Numerica.LinearAlgebra.determinant(matrix)
-let determinantFree = determinant(matrix)
-let determinantValue = matrix.determinant()
-let inverseNamespace = Numerica.LinearAlgebra.inverse(matrix)
-let inverseFree = inverse(matrix)
-let inverseValue = matrix.inverse()
-let solutionNamespace = Numerica.LinearAlgebra.solve(matrix, vector)
-let solutionFree = solve(matrix, vector)
-let solutionValue = matrix.solve(vector)
-let eigenvaluesNamespace = Numerica.LinearAlgebra.eigenvalues(symmetric)
-let eigenvaluesFree = eigenvalues(symmetric)
-let eigenvaluesValue = symmetric.eigenvalues()
-let eigenvectorsNamespace = Numerica.LinearAlgebra.eigenvectors(symmetric)
-let eigenvectorsFree = eigenvectors(symmetric)
-let eigenvectorsValue = symmetric.eigenvectors()
+let determinantNamespace = try Numerica.LinearAlgebra.determinant(matrix)
+let determinantFree = try determinant(matrix)
+let determinantValue = try matrix.determinant()
+let inverseNamespace = try Numerica.LinearAlgebra.inverse(matrix)
+let inverseFree = try inverse(matrix)
+let inverseValue = try matrix.inverse()
+let solutionNamespace = try Numerica.LinearAlgebra.solve(matrix, vector)
+let solutionFree = try solve(matrix, vector)
+let solutionValue = try matrix.solve(vector)
+let eigenvaluesNamespace = try Numerica.LinearAlgebra.eigenvalues(symmetric)
+let eigenvaluesFree = try eigenvalues(symmetric)
+let eigenvaluesValue = try symmetric.eigenvalues()
+let eigenvectorsNamespace = try Numerica.LinearAlgebra.eigenvectors(symmetric)
+let eigenvectorsFree = try eigenvectors(symmetric)
+let eigenvectorsValue = try symmetric.eigenvectors()
 
 print("Matrix values:", matrix.values)
 print("Vector values:", vector.values)
@@ -36,10 +36,10 @@ print("Eigenvectors namespace/free/value (expected normalized orthogonal vectors
 // Cholesky decomposition, log-determinant, and matrix right-hand-side solve:
 // https://en.wikipedia.org/wiki/Cholesky_decomposition
 let symmetricPositiveDefinite = Matrix([[4, 12, -16], [12, 37, -43], [-16, -43, 98]])!
-let choleskyFactor = symmetricPositiveDefinite.choleskyDecomposition()
-let logDet = symmetricPositiveDefinite.logDeterminant()
+let choleskyFactor = try symmetricPositiveDefinite.choleskyDecomposition()
+let logDet = try symmetricPositiveDefinite.logDeterminant()
 let identity = Matrix([[1, 0], [0, 1]])!
-let matrixSolution = matrix.solve(identity)
+let matrixSolution = try matrix.solve(identity)
 
 print("Cholesky factor (expected [2, 0, 0, 6, 1, 0, -8, 5, 3]): \(choleskyFactor?.values ?? [])")
 print("Log-determinant (expected log(det) = log(36) ~ 3.5835): \(logDet ?? .nan)")

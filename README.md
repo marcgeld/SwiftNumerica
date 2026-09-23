@@ -99,11 +99,13 @@ Public APIs call internal backend protocols through `BackendResolver`. Public AP
 
 SwiftNumerica supports runtime-selectable compute backends for benchmarking, numerical verification, regression testing, implementation comparison, and future hardware acceleration.
 
-Available backend options:
+Available compute backends:
 
 - `ComputeBackend.pureSwift`: the pure Swift reference implementation. This backend must always be available and is the correctness baseline.
 - `ComputeBackend.accelerate`: always uses Accelerate-backed implementations for operations implemented in that backend. Selecting it explicitly fails availability resolution with `BackendError.unavailable(.accelerate)` when Accelerate cannot be imported.
 - `ComputeBackend.automatic`: automatic backend selection. The priority is Accelerate, then PureSwift.
+
+The `MLX` package trait currently provides conversions between SwiftNumerica values and `MLXArray`; it does not add a selectable `.mlx` compute backend. MLX computation remains a future backend option.
 
 Operations that select a compute backend are `throws`. When an explicitly selected backend is unavailable, they propagate `BackendError.unavailable`; `nil` remains reserved for undefined results or invalid numerical inputs. Call sites should use `try` and handle backend errors.
 
@@ -133,7 +135,7 @@ A Swift target cannot define those macros safely:
 - Passing `-Xcc -DACCELERATE_NEW_LAPACK` requires `unsafeFlags`, and Swift Package Manager refuses to resolve packages that use unsafe flags as dependencies, which would break the packaging contract validated by CI.
 - Calling the deprecated CLAPACK symbols directly from Swift works but emits deprecation warnings on every build and depends on an interface Apple may remove.
 
-A C target avoids all of this: `cSettings: [.define(...)]` is a safe setting that applies when the target compiles, so `Sources/CNumericaLAPACK` enables the modern interface and exposes thin wrapper functions that the Swift backend calls. This mirrors Apple's own documented approach in [Solving systems of linear equations with LAPACK](https://developer.apple.com/documentation/accelerate/solving-systems-of-linear-equations-with-lapack), which also wraps the LAPACK routines in helper functions. On platforms without Accelerate the target compiles to stubs that report unavailability, and the backends fall back to the PureSwift reference implementation.
+A C target avoids all of this: `cSettings: [.define(...)]` is a safe setting that applies when the target compiles, so `Sources/CNumericaLAPACK` enables the modern interface and exposes thin wrapper functions that the Swift backend calls. This mirrors Apple's own documented approach in [Solving systems of linear equations with LAPACK](https://developer.apple.com/documentation/accelerate/solving-systems-of-linear-equations-with-lapack), which also wraps the LAPACK routines in helper functions. On platforms without Accelerate the target compiles to stubs that report unavailability. `.automatic` then resolves to PureSwift; explicitly selecting `.accelerate` throws `BackendError.unavailable(.accelerate)`.
 
 ## Optional MLX Support
 
@@ -171,7 +173,7 @@ let matrixRoundTrip = Matrix(mlxArray: matrixArray)
 Without the trait, `SwiftNumericaMLX` compiles to an empty module and the MLX
 package is never built or linked.
 
-Existing optional-returning numerical APIs preserve their current signatures. Code that needs explicit backend availability errors should call `try Numerica.resolvedBackend()` after changing `Numerica.configuration.backend`.
+Backend-routed numerical APIs are throwing APIs. Use `try` on each such operation and handle backend availability errors where appropriate; `try Numerica.resolvedBackend()` can be used to inspect the selected backend before running a computation.
 
 ## Current Status
 
@@ -181,7 +183,7 @@ Implemented:
 - Tensor reshaping with row-major storage preservation
 - Descriptive statistics: sum, min, max, mean, median, mode, range, population/sample variance, population/sample standard deviation, skewness, excess kurtosis, quantile, percentile, interquartile range, and z-score
 - Correlation and covariance: Pearson, Spearman, population/sample covariance, and convenience correlation/covariance aliases
-- Hypothesis testing: Welch t-test, paired t-test, chi-square goodness-of-fit, one-way ANOVA, Mann-Whitney U, and Kolmogorov-Smirnov goodness-of-fit with typed results
+- Hypothesis testing: Student-t confidence intervals for sample means, Welch t-test, paired t-test, chi-square goodness-of-fit, one-way ANOVA, Mann-Whitney U, and Kolmogorov-Smirnov goodness-of-fit with typed results
 - Regression: simple linear, multiple linear, polynomial, and binary logistic regression with lightweight functions and model-oriented estimators
 - Optimization: `minimize` and `maximize` with gradient descent, Newton-Raphson, LBFGS, and Nelder-Mead
 - Linear algebra: `Matrix`, `Vector`, determinant, inverse, solve with vector or matrix right-hand sides, Cholesky decomposition, log-determinant, and real symmetric eigenvalues/eigenvectors (near-symmetric inputs within a relative `1e-6` tolerance are symmetrized internally)
@@ -198,15 +200,15 @@ Implemented:
 import SwiftNumerica
 
 let values = Tensor.vector([1, 2, 3, 4, 5])
-let mean = values.mean()
-let p95 = values.percentile(95)
-let profile = DatasetProfiler.profile(values)
+let mean = try values.mean()
+let p95 = try values.percentile(95)
+let profile = try DatasetProfiler.profile(values)
 
 let normal = Numerica.Probability.NormalDistribution()
 let densityAtZero = normal?.pdf(0)
 let simulatedValues = normal?.sample(count: 1_000)
 
-let test = HypothesisTesting.welchTTest(.vector([8, 9, 10]), .vector([1, 2, 3]))
+let test = try HypothesisTesting.welchTTest(.vector([8, 9, 10]), .vector([1, 2, 3]))
 let pValue = test?.pValue
 
 let solution = minimize(
@@ -219,12 +221,12 @@ let solution = minimize(
 )
 
 let matrix = Matrix([[4, 7], [2, 6]])!
-let determinant = matrix.determinant()
-let inverse = matrix.inverse()
-let linearSolution = matrix.solve(Vector([1, 0]))
+let determinant = try matrix.determinant()
+let inverse = try matrix.inverse()
+let linearSolution = try matrix.solve(Vector([1, 0]))
 
 let monteCarlo = MonteCarloSimulation(iterations: 10_000)
-let estimate = monteCarlo?.run {
+let estimate = try monteCarlo?.run {
     Double.random(in: 0...1)
 }
 
@@ -243,7 +245,7 @@ let weather = MarkovChain(
 let forecast = weather?.simulate(startingAt: "sunny", steps: 7)
 
 let signal = Signal([1, 0, -1, 0], sampleRate: 4)
-let spectrum = signal?.fft()
+let spectrum = try signal?.fft()
 let smoothed = signal?.movingAverage(windowSize: 3)
 let peaks = signal?.peaks()
 
@@ -254,18 +256,18 @@ a,3
 b,10
 """)
 let grouped = table?.grouped(by: "group")
-let summaries = grouped?.summaries()
+let summaries = try grouped?.summaries()
 let numericValues = table?.numericColumn("value")
 
 let linear = LinearRegression()
-let line = linear.fit(.vector([1, 2, 3]), .vector([3, 5, 7]))
+let line = try linear.fit(.vector([1, 2, 3]), .vector([3, 5, 7]))
 
 let polynomial = PolynomialRegression(degree: 2)
-let curve = polynomial?.fit(.vector([-1, 0, 1]), .vector([2, 1, 6]))
+let curve = try polynomial?.fit(.vector([-1, 0, 1]), .vector([2, 1, 6]))
 
 let features = Tensor.matrix([[0], [1], [2], [3]])!
 let target = Tensor.vector([0, 0, 1, 1])
-let classifier = LogisticRegression(learningRate: 0.5, iterations: 2_000)?
+let classifier = try LogisticRegression(learningRate: 0.5, iterations: 2_000)?
     .fit(features: features, target: target)
 ```
 
@@ -342,7 +344,7 @@ import SwiftNumerica
 
 let signal = Signal([1, 0, -1, 0], sampleRate: 4)
 
-guard let spectrum = signal?.fft() else {
+guard let spectrum = try signal?.fft() else {
     fatalError("Unable to compute FFT.")
 }
 

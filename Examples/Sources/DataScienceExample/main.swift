@@ -18,8 +18,8 @@ b,10,third
 let table = DataTable.importCSV(csv)!
 let valueColumn = table.numericColumn("value")!
 let tensor = table.tensor(columns: ["value"])!
-let summary = table.summary(for: "value")!
-let summaries = table.summaries()
+let summary = try table.summary(for: "value")!
+let summaries = try table.summaries()
 let grouped = table.grouped(by: "group")!
 let tensorTable = DataTable(tensor: Tensor.matrix([[1, 2], [3, 4]])!, columnNames: ["x", "y"])!
 let numericTable = DataTable(numericColumns: ["x": [1, 2], "y": [3, 4]])!
@@ -38,7 +38,7 @@ let outputURL = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathCompon
 try table.exportCSV(to: outputURL)
 let reloaded = try DataTable.importCSV(from: outputURL)!
 let noteColumn = table.column("note")
-let groupedSummaryKeys = grouped.summaries().keys.sorted()
+let groupedSummaryKeys = try grouped.summaries().keys.sorted()
 
 print("Columns (expected [group, value, note]): \(table.columns)")
 print("Rows (expected three CSV data rows): \(table.rows)")

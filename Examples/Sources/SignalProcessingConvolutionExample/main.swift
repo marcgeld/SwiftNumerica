@@ -8,9 +8,9 @@ import SwiftNumerica
 
 let signal = Tensor.vector([1, 2, 3, 4])
 let kernel = Tensor.vector([0.25, 0.5, 0.25])
-let convolution = Numerica.SignalProcessing.convolve(signal, with: kernel)!
-let correlation = Numerica.SignalProcessing.correlate(signal, with: kernel)!
-let autocorrelation = Numerica.SignalProcessing.autocorrelation(signal)!
+let convolution = try Numerica.SignalProcessing.convolve(signal, with: kernel)!
+let correlation = try Numerica.SignalProcessing.correlate(signal, with: kernel)!
+let autocorrelation = try Numerica.SignalProcessing.autocorrelation(signal)!
 let movingAverage = Numerica.SignalProcessing.movingAverage(signal, windowSize: 3)!
 let rectangularWindow = Numerica.SignalProcessing.rectangularWindow(size: 4)
 let hannWindow = Numerica.SignalProcessing.hannWindow(size: 4)

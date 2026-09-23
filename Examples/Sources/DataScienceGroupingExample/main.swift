@@ -11,7 +11,7 @@ let table = DataTable(
 )!
 let tensorTable = DataTable(tensor: Tensor.matrix([[1, 2], [3, 4]])!, columnNames: ["x", "y"])!
 let numericTable = DataTable(numericColumns: ["x": [1, 2], "y": [3, 4]])!
-let summary = table.summary(for: "value")!
+let summary = try table.summary(for: "value")!
 let grouped = table.grouped(by: "group")!
 let manualSummary = ColumnSummary(
     column: "manual",
@@ -24,8 +24,8 @@ let manualSummary = ColumnSummary(
     sampleStandardDeviation: 0.5.squareRoot()
 )
 let manualGroup = GroupedDataTable(groupColumn: "group", groups: ["all": table])
-let allSummaries = table.summaries()
-let groupedSummaries = grouped.summaries()
+let allSummaries = try table.summaries()
+let groupedSummaries = try grouped.summaries()
 let tensorTableCSV = tensorTable.csvString()
 let numericTableCSV = numericTable.csvString()
 

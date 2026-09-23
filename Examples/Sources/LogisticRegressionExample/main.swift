@@ -7,8 +7,8 @@ import SwiftNumerica
 
 let features = Tensor.matrix([[0], [1], [2], [3]])!
 let target = Tensor.vector([0, 0, 1, 1])
-let result = Numerica.Statistics.logisticRegression(features: features, target: target, learningRate: 0.5, iterations: 2_000)!
-let modelResult = LogisticRegression(learningRate: 0.5, iterations: 2_000)!.fit(features: features, target: target)!
+let result = try Numerica.Statistics.logisticRegression(features: features, target: target, learningRate: 0.5, iterations: 2_000)!
+let modelResult = try LogisticRegression(learningRate: 0.5, iterations: 2_000)!.fit(features: features, target: target)!
 let probability = result.predictProbability(Tensor.vector([3]))
 let predictedClass = modelResult.predict(Tensor.vector([3]))
 
