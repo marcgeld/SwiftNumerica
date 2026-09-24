@@ -302,6 +302,13 @@ Vector prediction for x = [2, 3] (expected [17, 34]): [17.0, 34.0]
 - Distribution-driven path starts at `0.0` and contains `6` values.
 - Deterministic final value is `5.0`.
 
+## ZipfMandelbrotExample
+
+- For ranks `1...3`, exponent `1`, and offset `0`, the normalizing constant is
+  `6/11` and masses are `[6/11, 3/11, 2/11]`.
+- With offset `1`, the normalizing constant is `12/13`, masses are
+  `[6/13, 4/13, 3/13]`, and the CDF through rank 2 is `10/13`.
+
 ## RegressionExample
 
 - Simple linear slope/intercept/r-squared are `2.0`, `1.0`, and `1.0`.

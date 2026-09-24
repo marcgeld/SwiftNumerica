@@ -48,6 +48,11 @@ let interval = try sample.meanConfidenceInterval(confidenceLevel: 0.95)
 
 The interval requires at least two finite observations. Its confidence level must be strictly between 0 and 1; invalid inputs return `nil`.
 
+The finite Zipf-Mandelbrot distribution models ranked outcomes with
+`P(rank) = C / (rank + offset)^exponent`, normalized across a specified number
+of ranks. The offset controls how quickly probability falls with rank. It
+models rank frequencies, not Mandelbrot-set values.
+
 ## Package Structure
 
 ```text
@@ -198,7 +203,7 @@ Implemented:
 - Signal processing: `Signal`, FFT/IFFT, convolution, correlation, autocorrelation, window functions, moving average, detrending, normalization, peak detection, periodogram, spectra, FIR filters, and biquad filtering
 - Data science integration: `DataTable`, CSV import/export, statistical summaries, and group-by aggregations; opt-in `TabularData.DataFrame` bridges through `SwiftNumericaTabularData`
 - Combinatorics: factorial, combinations, permutations
-- Probability: tensor-based discrete expected value plus normal, uniform, Poisson, exponential, binomial, beta, gamma, and hypergeometric distributions with CDFs, inverse CDFs, analytical moments, and random sampling, including a deterministic `SeededRandomNumberGenerator` (SplitMix64) for reproducible sampling and simulation
+- Probability: tensor-based discrete expected value plus normal, uniform, Poisson, exponential, binomial, beta, gamma, hypergeometric, and finite Zipf-Mandelbrot distributions with CDFs, inverse CDFs, analytical moments, and random sampling, including a deterministic `SeededRandomNumberGenerator` (SplitMix64) for reproducible sampling and simulation
 - Data profiling: Benford, Zipf, Pareto, normality, uniformity, outliers, correlation matrices, trends, growth rates, and `DatasetProfiler.profile(_:)`
 
 ## Example Usage

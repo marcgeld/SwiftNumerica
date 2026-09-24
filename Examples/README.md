@@ -55,3 +55,4 @@ Available examples:
 - `SignalProcessingTransformsExample`
 - `SimulationExample`
 - `TensorBasicsExample`
+- `ZipfMandelbrotExample`

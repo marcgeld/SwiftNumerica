@@ -2,6 +2,52 @@ import Foundation
 import Testing
 @testable import SwiftNumerica
 
+@Test func zipfMandelbrotDistributionMatchesFiniteZipfProbabilities() throws {
+    let distribution = try #require(
+        Numerica.Probability.ZipfMandelbrotDistribution(numberOfRanks: 3, exponent: 1)
+    )
+
+    #expect(distribution.normalizationConstant.isApproximatelyEqual(to: 6.0 / 11.0))
+    #expect(distribution.pmf(1).isApproximatelyEqual(to: 6.0 / 11.0))
+    #expect(distribution.pmf(2).isApproximatelyEqual(to: 3.0 / 11.0))
+    #expect(distribution.pmf(3).isApproximatelyEqual(to: 2.0 / 11.0))
+    #expect(distribution.pmf(0) == 0)
+    #expect(distribution.pmf(4) == 0)
+    #expect(distribution.cdf(2).isApproximatelyEqual(to: 9.0 / 11.0))
+    #expect(distribution.cdf(3) == 1)
+}
+
+@Test func zipfMandelbrotOffsetFlattensRankProbabilitiesAndSupportsSampling() throws {
+    let zipf = try #require(
+        Numerica.Probability.ZipfMandelbrotDistribution(numberOfRanks: 3, exponent: 1)
+    )
+    let shifted = try #require(
+        Numerica.Probability.ZipfMandelbrotDistribution(numberOfRanks: 3, exponent: 1, offset: 1)
+    )
+
+    #expect(shifted.pmf(1) < zipf.pmf(1))
+    #expect(shifted.pmf(3) > zipf.pmf(3))
+    #expect(shifted.normalizationConstant.isApproximatelyEqual(to: 12.0 / 13.0))
+    #expect(shifted.probability(at: 2) == shifted.pmf(2))
+    #expect(shifted.probability(at: 2.5) == 0)
+    #expect(shifted.inverseCDF(0) == 1)
+    #expect(shifted.inverseCDF(1) == 3)
+    #expect(shifted.inverseCDF(.nan) == nil)
+
+    var generator = SeededRandomNumberGenerator(seed: 42)
+    let samples = shifted.sample(count: 100, using: &generator)
+    #expect(samples.count == 100)
+    #expect(samples.allSatisfy { (1...3).contains($0) })
+}
+
+@Test func zipfMandelbrotDistributionRejectsInvalidParameters() {
+    #expect(Numerica.Probability.ZipfMandelbrotDistribution(numberOfRanks: 0) == nil)
+    #expect(Numerica.Probability.ZipfMandelbrotDistribution(numberOfRanks: 3, exponent: 0) == nil)
+    #expect(Numerica.Probability.ZipfMandelbrotDistribution(numberOfRanks: 3, exponent: .infinity) == nil)
+    #expect(Numerica.Probability.ZipfMandelbrotDistribution(numberOfRanks: 3, offset: -1) == nil)
+    #expect(Numerica.Probability.ZipfMandelbrotDistribution(numberOfRanks: 3, offset: .nan) == nil)
+}
+
 @Test func normalDistributionComputesDensityAndDistribution() throws {
     let distribution = try #require(Numerica.Probability.NormalDistribution())
     #expect(distribution.pdf(0).isApproximatelyEqual(to: 0.3989422804014327))

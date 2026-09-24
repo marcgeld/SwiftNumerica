@@ -166,6 +166,7 @@ public symbols.
 | `BinomialDistribution` and members | type | `DiscreteDistributionsExample` |
 | `PoissonDistribution` and members | type | `DiscreteDistributionsExample` |
 | `HypergeometricDistribution` and members | type | `DiscreteDistributionsExample` |
+| `ZipfMandelbrotDistribution` and members | type | `ZipfMandelbrotExample` |
 | `SeededRandomNumberGenerator` | type | `ProbabilityDistributionsExample` |
 
 Distribution member coverage includes public initializer parameters, stored

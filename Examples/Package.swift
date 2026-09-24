@@ -59,6 +59,7 @@ let package = Package(
         .executableTarget(name: "SignalProcessingTransformsExample", dependencies: ["SwiftNumerica"]),
         .executableTarget(name: "SimulationExample", dependencies: ["SwiftNumerica"]),
         .executableTarget(name: "TensorBasicsExample", dependencies: ["SwiftNumerica"]),
+        .executableTarget(name: "ZipfMandelbrotExample", dependencies: ["SwiftNumerica"]),
     ],
     swiftLanguageModes: [.v6]
 )
